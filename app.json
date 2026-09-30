@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "Ass1_MMA_",
-    "slug": "Ass1_MMA_",
+    "slug": "ass1-mma",
+    "owner": "thanhnam7791as-team",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

@@ -4,7 +4,8 @@
 **Student Name:** [Điền họ và tên sinh viên]  
 **Class:** [Điền mã lớp]  
 **GitHub Repository:** https://github.com/ThanhNam7791aaa/Ass1_MMA  
-**Expo / App Preview Link:** [Điền link Expo hoặc đính kèm ảnh QR code]  
+**Expo / APK Download Link:** https://expo.dev/accounts/thanhnam7791as-team/projects/ass1-mma/builds/3c29154d-27c4-47bf-a67c-67ee7b94bfd0  
+**Download QR Code:** [app_download_qr.png](app_download_qr.png) (Quét để tải file APK về điện thoại)  
 
 ---
 

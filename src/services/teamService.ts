@@ -143,36 +143,70 @@ export const subscribeUserTeams = (
     where('userId', '==', userId)
   );
 
-  return onSnapshot(q, async (snapshot) => {
+  let teamUnsubscribes: Unsubscribe[] = [];
+  const teamsMap = new Map<string, Team>();
+
+  const mainUnsubscribe = onSnapshot(q, (snapshot) => {
+    // Unsubscribe from previous team listeners
+    teamUnsubscribes.forEach((unsub) => unsub());
+    teamUnsubscribes = [];
+
     const teamIds = snapshot.docs.map((docSnap) => docSnap.data().teamId as string);
 
     if (teamIds.length === 0) {
+      teamsMap.clear();
       onUpdate([]);
       return;
     }
 
-    try {
-      const teamsList: Team[] = [];
-      for (const tId of teamIds) {
-        const tDoc = await getDoc(doc(db, TEAMS_COLLECTION, tId));
-        if (tDoc.exists()) {
-          const data = tDoc.data();
-          teamsList.push({
-            id: tDoc.id,
-            name: data.name || '',
-            description: data.description || '',
-            ownerId: data.ownerId || '',
-            ownerName: data.ownerName || '',
-            code: data.code || '',
-            createdAt: data.createdAt,
-          });
-        }
+    // Clean up cached teams that user is no longer a member of
+    const currentTeamIds = new Set(teamIds);
+    for (const id of Array.from(teamsMap.keys())) {
+      if (!currentTeamIds.has(id)) {
+        teamsMap.delete(id);
       }
-      onUpdate(teamsList);
-    } catch (err) {
-      console.error('Error fetching user teams details:', err);
     }
+
+    const emitUpdatedTeams = () => {
+      const list = teamIds
+        .map((id) => teamsMap.get(id))
+        .filter((t): t is Team => t !== undefined);
+      onUpdate(list);
+    };
+
+    // Attach real-time listener to each team doc
+    teamIds.forEach((tId) => {
+      const unsub = onSnapshot(
+        doc(db, TEAMS_COLLECTION, tId),
+        (tDoc) => {
+          if (tDoc.exists()) {
+            const data = tDoc.data();
+            teamsMap.set(tId, {
+              id: tDoc.id,
+              name: data.name || '',
+              description: data.description || '',
+              ownerId: data.ownerId || '',
+              ownerName: data.ownerName || '',
+              code: data.code || '',
+              createdAt: data.createdAt,
+            });
+          } else {
+            teamsMap.delete(tId);
+          }
+          emitUpdatedTeams();
+        },
+        (err) => {
+          console.error(`Error listening to team ${tId}:`, err);
+        }
+      );
+      teamUnsubscribes.push(unsub);
+    });
   });
+
+  return () => {
+    mainUnsubscribe();
+    teamUnsubscribes.forEach((unsub) => unsub());
+  };
 };
 
 /**
@@ -255,6 +289,37 @@ export const getTeamById = async (teamId: string): Promise<Team | null> => {
     };
   }
   return null;
+};
+
+/**
+ * Real-time listener for a single team's details
+ */
+export const subscribeTeamDetails = (
+  teamId: string,
+  onUpdate: (team: Team | null) => void
+): Unsubscribe => {
+  return onSnapshot(
+    doc(db, TEAMS_COLLECTION, teamId),
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        onUpdate({
+          id: docSnap.id,
+          name: data.name,
+          description: data.description || '',
+          ownerId: data.ownerId,
+          ownerName: data.ownerName,
+          code: data.code,
+          createdAt: data.createdAt,
+        });
+      } else {
+        onUpdate(null);
+      }
+    },
+    (err) => {
+      console.error('Error subscribing to team details:', err);
+    }
+  );
 };
 
 /**

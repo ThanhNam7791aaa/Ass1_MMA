@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Team, TeamMember } from '../types/team';
 import { Task } from '../types/task';
 import {
-  getTeamById,
+  subscribeTeamDetails,
   subscribeTeamMembers,
   subscribeTeamTasks,
   updateTeam,
@@ -85,8 +85,8 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
   };
 
   useEffect(() => {
-    // 1. Fetch Team Details
-    getTeamById(teamId).then((data) => {
+    // 1. Subscribe Team Details Real-time
+    const unsubTeam = subscribeTeamDetails(teamId, (data) => {
       if (data) setTeam(data);
     });
 
@@ -102,6 +102,7 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
     });
 
     return () => {
+      unsubTeam();
       unsubMembers();
       unsubTasks();
     };

@@ -184,16 +184,7 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
               <Ionicons name="people" size={24} color="#4f46e5" />
             </View>
             <View style={styles.bannerInfo}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={styles.bannerName}>{team?.name || teamName}</Text>
-                <TouchableOpacity
-                  onPress={handleOpenEditTeam}
-                  style={styles.inlineEditBtn}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons name="pencil-outline" size={16} color="#4f46e5" />
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.bannerName}>{team?.name || teamName}</Text>
               <Text style={styles.bannerDesc} numberOfLines={2}>
                 {team?.description || 'No description provided'}
               </Text>

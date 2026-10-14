@@ -10,6 +10,8 @@ import { LoginScreen } from '../screens/LoginScreen';
 import { SignUpScreen } from '../screens/SignUpScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { TeamsScreen } from '../screens/TeamsScreen';
+import { TeamDetailScreen } from '../screens/TeamDetailScreen';
+import { ChatScreen } from '../screens/ChatScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 
 export type RootTabParamList = {
@@ -113,6 +115,8 @@ export const AppNavigator: React.FC = () => {
       ) : (
         <AppStack.Navigator screenOptions={{ headerShown: false }}>
           <AppStack.Screen name="MainTabs" component={MainTabs} />
+          <AppStack.Screen name="TeamDetail" component={TeamDetailScreen} />
+          <AppStack.Screen name="Chat" component={ChatScreen} />
         </AppStack.Navigator>
       )}
     </NavigationContainer>

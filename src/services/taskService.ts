@@ -16,16 +16,13 @@ import { Task } from '../types/task';
 const TASKS_COLLECTION = 'tasks';
 
 /**
- * Real-time listener for tasks list, ordered by createdAt descending.
- * Falls back gracefully if ordering index is missing.
+ * Real-time listener for all tasks or filtered tasks, ordered by createdAt descending.
  */
 export const subscribeToTasks = (
   onUpdate: (tasks: Task[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe => {
   const collectionRef = collection(db, TASKS_COLLECTION);
-  
-  // Try ordered query first
   const q = query(collectionRef, orderBy('createdAt', 'desc'));
 
   return onSnapshot(
@@ -42,37 +39,44 @@ export const subscribeToTasks = (
           dueDate: data.dueDate || '',
           createdAt: data.createdAt,
           teamId: data.teamId ?? null,
+          teamName: data.teamName || '',
           assigneeId: data.assigneeId ?? null,
+          assigneeName: data.assigneeName || '',
         } as Task;
       });
       onUpdate(tasks);
     },
     (error) => {
       console.warn('Realtime listener fallback without order:', error.message);
-      // Fallback query without orderBy if index/field issue occurs
-      return onSnapshot(collectionRef, (snapshot) => {
-        const tasks: Task[] = snapshot.docs.map((docSnap) => {
-          const data = docSnap.data();
-          return {
-            id: docSnap.id,
-            title: data.title || '',
-            description: data.description || '',
-            status: data.status || 'To Do',
-            priority: data.priority || 'Medium',
-            dueDate: data.dueDate || '',
-            createdAt: data.createdAt,
-            teamId: data.teamId ?? null,
-            assigneeId: data.assigneeId ?? null,
-          } as Task;
-        });
-        onUpdate(tasks);
-      }, onError);
+      return onSnapshot(
+        collectionRef,
+        (snapshot) => {
+          const tasks: Task[] = snapshot.docs.map((docSnap) => {
+            const data = docSnap.data();
+            return {
+              id: docSnap.id,
+              title: data.title || '',
+              description: data.description || '',
+              status: data.status || 'To Do',
+              priority: data.priority || 'Medium',
+              dueDate: data.dueDate || '',
+              createdAt: data.createdAt,
+              teamId: data.teamId ?? null,
+              teamName: data.teamName || '',
+              assigneeId: data.assigneeId ?? null,
+              assigneeName: data.assigneeName || '',
+            } as Task;
+          });
+          onUpdate(tasks);
+        },
+        onError
+      );
     }
   );
 };
 
 /**
- * Create a new task document in Firestore
+ * Create a new task document in Firestore with Team and Assignee associations
  */
 export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<string> => {
   const docRef = await addDoc(collection(db, TASKS_COLLECTION), {
@@ -82,7 +86,9 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
     priority: task.priority || 'Medium',
     dueDate: task.dueDate || '',
     teamId: task.teamId ?? null,
+    teamName: task.teamName || null,
     assigneeId: task.assigneeId ?? null,
+    assigneeName: task.assigneeName || null,
     createdAt: serverTimestamp(),
   });
   return docRef.id;
@@ -101,7 +107,9 @@ export const updateTask = async (id: string, updates: Partial<Task>): Promise<vo
   if (updates.priority !== undefined) dataToUpdate.priority = updates.priority;
   if (updates.dueDate !== undefined) dataToUpdate.dueDate = updates.dueDate;
   if (updates.teamId !== undefined) dataToUpdate.teamId = updates.teamId;
+  if (updates.teamName !== undefined) dataToUpdate.teamName = updates.teamName;
   if (updates.assigneeId !== undefined) dataToUpdate.assigneeId = updates.assigneeId;
+  if (updates.assigneeName !== undefined) dataToUpdate.assigneeName = updates.assigneeName;
 
   await updateDoc(taskRef, dataToUpdate);
 };

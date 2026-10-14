@@ -1,0 +1,542 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  SafeAreaView,
+  Share,
+  Alert,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Team, TeamMember } from '../types/team';
+import { Task } from '../types/task';
+import {
+  getTeamById,
+  subscribeTeamMembers,
+  subscribeTeamTasks,
+} from '../services/teamService';
+import { createTask, updateTask, deleteTask } from '../services/taskService';
+import { TaskCard } from '../components/TaskCard';
+import { TaskModal } from '../components/TaskModal';
+
+interface TeamDetailScreenProps {
+  route: any;
+  navigation: any;
+}
+
+export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
+  route,
+  navigation,
+}) => {
+  const { teamId, teamName } = route.params;
+
+  const [team, setTeam] = useState<Team | null>(null);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [activeTab, setActiveTab] = useState<'tasks' | 'members'>('tasks');
+  const [loading, setLoading] = useState(true);
+
+  // Task Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    // 1. Fetch Team Details
+    getTeamById(teamId).then((data) => {
+      if (data) setTeam(data);
+    });
+
+    // 2. Subscribe Team Members
+    const unsubMembers = subscribeTeamMembers(teamId, (teamMembers) => {
+      setMembers(teamMembers);
+    });
+
+    // 3. Subscribe Team Tasks
+    const unsubTasks = subscribeTeamTasks(teamId, (teamTasks) => {
+      setTasks(teamTasks);
+      setLoading(false);
+    });
+
+    return () => {
+      unsubMembers();
+      unsubTasks();
+    };
+  }, [teamId]);
+
+  const handleShareCode = async () => {
+    if (!team) return;
+    try {
+      await Share.share({
+        message: `Join our team "${team.name}" on TaskPulse using code: ${team.code}`,
+      });
+    } catch (err: any) {
+      Alert.alert('Share', `Team Code: ${team.code}`);
+    }
+  };
+
+  const handleSaveTask = async (taskData: any) => {
+    if (editingTask && editingTask.id) {
+      await updateTask(editingTask.id, {
+        ...taskData,
+        teamId,
+        teamName: team?.name || teamName,
+      });
+    } else {
+      await createTask({
+        ...taskData,
+        teamId,
+        teamName: team?.name || teamName,
+      });
+    }
+  };
+
+  const handleDeleteTask = (id: string, title: string) => {
+    Alert.alert('Delete Task', `Delete "${title}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteTask(id);
+        },
+      },
+    ]);
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Navigation Bar */}
+        <View style={styles.navBar}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#0f172a" />
+          </TouchableOpacity>
+          <Text style={styles.navTitle} numberOfLines={1}>
+            {team?.name || teamName}
+          </Text>
+          <TouchableOpacity onPress={handleShareCode} style={styles.shareCodeButton}>
+            <Ionicons name="share-outline" size={20} color="#2563eb" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Team Banner Card */}
+        <View style={styles.teamBanner}>
+          <View style={styles.bannerRow}>
+            <View style={styles.teamBadgeCircle}>
+              <Ionicons name="people" size={24} color="#2563eb" />
+            </View>
+            <View style={styles.bannerInfo}>
+              <Text style={styles.bannerName}>{team?.name || teamName}</Text>
+              <Text style={styles.bannerDesc} numberOfLines={2}>
+                {team?.description || 'No description provided'}
+              </Text>
+            </View>
+            <View style={styles.codeContainer}>
+              <Text style={styles.codeLabel}>Code</Text>
+              <Text style={styles.codeValue}>{team?.code || '------'}</Text>
+            </View>
+          </View>
+
+          {/* Action Row: Open Team Chat Button */}
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() =>
+              navigation.navigate('Chat', {
+                teamId,
+                teamName: team?.name || teamName,
+              })
+            }
+          >
+            <Ionicons name="chatbubbles" size={18} color="#ffffff" />
+            <Text style={styles.chatButtonText}>Open Team Chat Room</Text>
+            <Ionicons name="chevron-forward" size={18} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Segmented Switch: Tasks vs Members */}
+        <View style={styles.tabSwitchContainer}>
+          <TouchableOpacity
+            style={[styles.switchTab, activeTab === 'tasks' && styles.switchTabActive]}
+            onPress={() => setActiveTab('tasks')}
+          >
+            <Ionicons
+              name="checkbox-outline"
+              size={16}
+              color={activeTab === 'tasks' ? '#2563eb' : '#64748b'}
+            />
+            <Text
+              style={[styles.switchTabText, activeTab === 'tasks' && styles.switchTabTextActive]}
+            >
+              Team Tasks ({tasks.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.switchTab, activeTab === 'members' && styles.switchTabActive]}
+            onPress={() => setActiveTab('members')}
+          >
+            <Ionicons
+              name="people-outline"
+              size={16}
+              color={activeTab === 'members' ? '#2563eb' : '#64748b'}
+            />
+            <Text
+              style={[styles.switchTabText, activeTab === 'members' && styles.switchTabTextActive]}
+            >
+              Members ({members.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Tab Content */}
+        {loading ? (
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color="#2563eb" />
+          </View>
+        ) : activeTab === 'tasks' ? (
+          <View style={{ flex: 1 }}>
+            {/* Create Task Button */}
+            <View style={styles.createTaskBar}>
+              <Text style={styles.sectionHeaderTitle}>Workspace Tasks</Text>
+              <TouchableOpacity
+                style={styles.addTaskBtn}
+                onPress={() => {
+                  setEditingTask(null);
+                  setModalVisible(true);
+                }}
+              >
+                <Ionicons name="add" size={16} color="#ffffff" />
+                <Text style={styles.addTaskBtnText}>Add Task</Text>
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={tasks}
+              keyExtractor={(item) => item.id || Math.random().toString()}
+              contentContainerStyle={styles.listPad}
+              renderItem={({ item }) => (
+                <TaskCard
+                  task={item}
+                  onEdit={(t) => {
+                    setEditingTask(t);
+                    setModalVisible(true);
+                  }}
+                  onDelete={handleDeleteTask}
+                />
+              )}
+              ListEmptyComponent={
+                <View style={styles.emptyBox}>
+                  <Ionicons name="clipboard-outline" size={48} color="#cbd5e1" />
+                  <Text style={styles.emptyTitle}>No tasks for this team yet</Text>
+                  <Text style={styles.emptySub}>
+                    Tap "+ Add Task" to assign work to members!
+                  </Text>
+                </View>
+              }
+            />
+          </View>
+        ) : (
+          <FlatList
+            data={members}
+            keyExtractor={(item) => item.id || item.userId}
+            contentContainerStyle={styles.listPad}
+            renderItem={({ item }) => (
+              <View style={styles.memberCard}>
+                <View style={styles.memberAvatar}>
+                  <Text style={styles.memberInitial}>
+                    {item.userName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.memberInfo}>
+                  <Text style={styles.memberName}>{item.userName}</Text>
+                  <Text style={styles.memberEmail}>{item.userEmail}</Text>
+                </View>
+                <View
+                  style={[
+                    styles.roleBadge,
+                    item.role === 'owner' ? styles.roleBadgeOwner : styles.roleBadgeMember,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.roleText,
+                      item.role === 'owner' ? styles.roleTextOwner : styles.roleTextMember,
+                    ]}
+                  >
+                    {item.role.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+            )}
+          />
+        )}
+
+        {/* Task Creation / Edit Modal */}
+        <TaskModal
+          visible={modalVisible}
+          initialTask={editingTask}
+          preselectedTeamId={teamId}
+          preselectedTeamName={team?.name || teamName}
+          onClose={() => setModalVisible(false)}
+          onSave={handleSaveTask}
+        />
+      </View>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  navBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  backButton: {
+    padding: 6,
+  },
+  navTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f172a',
+    flex: 1,
+    marginLeft: 8,
+  },
+  shareCodeButton: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#eff6ff',
+  },
+  teamBanner: {
+    backgroundColor: '#ffffff',
+    margin: 16,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  bannerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  teamBadgeCircle: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  bannerInfo: {
+    flex: 1,
+  },
+  bannerName: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  bannerDesc: {
+    fontSize: 13,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  codeContainer: {
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+  },
+  codeLabel: {
+    fontSize: 10,
+    color: '#64748b',
+    fontWeight: '600',
+  },
+  codeValue: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1e293b',
+    letterSpacing: 1,
+  },
+  chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#2563eb',
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  chatButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  tabSwitchContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    gap: 10,
+  },
+  switchTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+  },
+  switchTabActive: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  switchTabText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  switchTabTextActive: {
+    color: '#2563eb',
+    fontWeight: '700',
+  },
+  createTaskBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  sectionHeaderTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  addTaskBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  addTaskBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  listPad: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  memberCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  memberAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  memberInitial: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  memberInfo: {
+    flex: 1,
+  },
+  memberName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  memberEmail: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 1,
+  },
+  roleBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  roleBadgeOwner: {
+    backgroundColor: '#fef3c7',
+  },
+  roleBadgeMember: {
+    backgroundColor: '#f1f5f9',
+  },
+  roleText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  roleTextOwner: {
+    color: '#b45309',
+  },
+  roleTextMember: {
+    color: '#64748b',
+  },
+  loadingBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 60,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#334155',
+    marginTop: 10,
+  },
+  emptySub: {
+    fontSize: 13,
+    color: '#94a3b8',
+    marginTop: 4,
+  },
+});

@@ -77,22 +77,12 @@ export const HomeScreen: React.FC = () => {
   };
 
   // Save (Create or Update) task
-  const handleSaveTask = async (taskData: {
-    title: string;
-    description: string;
-    status: TaskStatus;
-    priority: TaskPriority;
-    dueDate: string;
-  }) => {
+  const handleSaveTask = async (taskData: any) => {
     try {
       if (editingTask && editingTask.id) {
         await updateTask(editingTask.id, taskData);
       } else {
-        await createTask({
-          ...taskData,
-          teamId: null,
-          assigneeId: null,
-        });
+        await createTask(taskData);
       }
     } catch (error: any) {
       console.error('Failed to save task:', error);

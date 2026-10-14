@@ -10,5 +10,7 @@ export interface Task {
   dueDate?: string;
   createdAt?: any;
   teamId?: string | null;
+  teamName?: string;
   assigneeId?: string | null;
+  assigneeName?: string;
 }

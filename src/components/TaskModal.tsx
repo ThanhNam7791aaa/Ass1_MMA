@@ -13,6 +13,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Task, TaskPriority, TaskStatus } from '../types/task';
+import { Team, TeamMember } from '../types/team';
+import { useAuth } from '../context/AuthContext';
+import { subscribeUserTeams, subscribeTeamMembers } from '../services/teamService';
 
 interface TaskModalProps {
   visible: boolean;
@@ -23,8 +26,14 @@ interface TaskModalProps {
     status: TaskStatus;
     priority: TaskPriority;
     dueDate: string;
+    teamId?: string | null;
+    teamName?: string;
+    assigneeId?: string | null;
+    assigneeName?: string;
   }) => Promise<void>;
   initialTask?: Task | null;
+  preselectedTeamId?: string;
+  preselectedTeamName?: string;
 }
 
 const STATUS_OPTIONS: TaskStatus[] = ['To Do', 'In Progress', 'Done'];
@@ -35,7 +44,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   onClose,
   onSave,
   initialTask,
+  preselectedTeamId,
+  preselectedTeamName,
 }) => {
+  const { user } = useAuth();
   const isEditing = !!initialTask;
 
   const [title, setTitle] = useState('');
@@ -43,9 +55,41 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [status, setStatus] = useState<TaskStatus>('To Do');
   const [priority, setPriority] = useState<TaskPriority>('Medium');
   const [dueDate, setDueDate] = useState('');
+
+  // Teams & Assignees state
+  const [userTeams, setUserTeams] = useState<Team[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [selectedTeamName, setSelectedTeamName] = useState<string>('');
+
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [selectedAssigneeId, setSelectedAssigneeId] = useState<string | null>(null);
+  const [selectedAssigneeName, setSelectedAssigneeName] = useState<string>('');
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Fetch teams of current user
+  useEffect(() => {
+    if (!user) return;
+    const unsubscribe = subscribeUserTeams(user.uid, (teams) => {
+      setUserTeams(teams);
+    });
+    return () => unsubscribe();
+  }, [user]);
+
+  // Fetch members when selected team changes
+  useEffect(() => {
+    if (!selectedTeamId) {
+      setTeamMembers([]);
+      return;
+    }
+    const unsubscribe = subscribeTeamMembers(selectedTeamId, (members) => {
+      setTeamMembers(members);
+    });
+    return () => unsubscribe();
+  }, [selectedTeamId]);
+
+  // Populate form on open
   useEffect(() => {
     if (initialTask) {
       setTitle(initialTask.title || '');
@@ -53,18 +97,32 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setStatus(initialTask.status || 'To Do');
       setPriority(initialTask.priority || 'Medium');
       setDueDate(initialTask.dueDate || '');
+      setSelectedTeamId(initialTask.teamId || null);
+      setSelectedTeamName(initialTask.teamName || '');
+      setSelectedAssigneeId(initialTask.assigneeId || null);
+      setSelectedAssigneeName(initialTask.assigneeName || '');
     } else {
       setTitle('');
       setDescription('');
       setStatus('To Do');
       setPriority('Medium');
       setDueDate('');
+
+      if (preselectedTeamId) {
+        setSelectedTeamId(preselectedTeamId);
+        setSelectedTeamName(preselectedTeamName || '');
+      } else {
+        setSelectedTeamId(null);
+        setSelectedTeamName('');
+      }
+
+      setSelectedAssigneeId(null);
+      setSelectedAssigneeName('');
     }
     setError(null);
-  }, [initialTask, visible]);
+  }, [initialTask, visible, preselectedTeamId, preselectedTeamName]);
 
   const handleSave = async () => {
-    // Client-side validation (Bonus feature requirement)
     if (!title.trim()) {
       setError('Task title is required');
       return;
@@ -79,10 +137,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         status,
         priority,
         dueDate: dueDate.trim(),
+        teamId: selectedTeamId,
+        teamName: selectedTeamName,
+        assigneeId: selectedAssigneeId,
+        assigneeName: selectedAssigneeName,
       });
       onClose();
     } catch (err: any) {
-      setError(err?.message || 'Failed to save task. Please try again.');
+      setError(err?.message || 'Failed to save task.');
     } finally {
       setLoading(false);
     }
@@ -107,7 +169,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 {isEditing ? '✏️ Edit Task' : '✨ Create New Task'}
               </Text>
               <Text style={styles.modalSubtitle}>
-                {isEditing ? 'Update the details for this task' : 'Fill in the information to add a task'}
+                {isEditing ? 'Update task details and assignments' : 'Fill in task details and assign to team/member'}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -116,7 +178,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           </View>
 
           <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
-            {/* Error Message */}
             {error ? (
               <View style={styles.errorBanner}>
                 <Ionicons name="alert-circle-outline" size={18} color="#ef4444" />
@@ -124,14 +185,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               </View>
             ) : null}
 
-            {/* Title Input */}
+            {/* Title */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>
                 Title <Text style={styles.requiredAsterisk}>*</Text>
               </Text>
               <TextInput
                 style={[styles.input, error && !title.trim() ? styles.inputError : null]}
-                placeholder="e.g. Design app wireframes"
+                placeholder="e.g. Implement authentication module"
                 placeholderTextColor="#94a3b8"
                 value={title}
                 onChangeText={(text) => {
@@ -141,12 +202,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               />
             </View>
 
-            {/* Description Input */}
+            {/* Description */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Description</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Optional notes, requirements or context..."
+                placeholder="Notes, requirements, checklist..."
                 placeholderTextColor="#94a3b8"
                 multiline
                 numberOfLines={3}
@@ -156,7 +217,130 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               />
             </View>
 
-            {/* Status Selection */}
+            {/* Team Picker (Exam 2 Requirement) */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Team (Workspace)</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.chip,
+                    selectedTeamId === null && styles.chipActive,
+                  ]}
+                  onPress={() => {
+                    setSelectedTeamId(null);
+                    setSelectedTeamName('');
+                    setSelectedAssigneeId(null);
+                    setSelectedAssigneeName('');
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      selectedTeamId === null && styles.chipTextActive,
+                    ]}
+                  >
+                    No Team (Personal)
+                  </Text>
+                </TouchableOpacity>
+
+                {userTeams.map((team) => {
+                  const isSelected = selectedTeamId === team.id;
+                  return (
+                    <TouchableOpacity
+                      key={team.id}
+                      style={[styles.chip, isSelected && styles.chipActive]}
+                      onPress={() => {
+                        setSelectedTeamId(team.id);
+                        setSelectedTeamName(team.name);
+                        setSelectedAssigneeId(null);
+                        setSelectedAssigneeName('');
+                      }}
+                    >
+                      <Ionicons
+                        name="people"
+                        size={14}
+                        color={isSelected ? '#ffffff' : '#2563eb'}
+                        style={{ marginRight: 4 }}
+                      />
+                      <Text
+                        style={[
+                          styles.chipText,
+                          isSelected && styles.chipTextActive,
+                        ]}
+                      >
+                        {team.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {/* Assignee Picker (Exam 2 Requirement) */}
+            {selectedTeamId ? (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Assign To (Team Member)</Text>
+                {teamMembers.length === 0 ? (
+                  <Text style={styles.subHint}>Loading team members...</Text>
+                ) : (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.chip,
+                        selectedAssigneeId === null && styles.chipActive,
+                      ]}
+                      onPress={() => {
+                        setSelectedAssigneeId(null);
+                        setSelectedAssigneeName('');
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.chipText,
+                          selectedAssigneeId === null && styles.chipTextActive,
+                        ]}
+                      >
+                        Unassigned
+                      </Text>
+                    </TouchableOpacity>
+
+                    {teamMembers.map((member) => {
+                      const isSelected = selectedAssigneeId === member.userId;
+                      return (
+                        <TouchableOpacity
+                          key={member.id || member.userId}
+                          style={[
+                            styles.chip,
+                            isSelected && styles.chipActiveGreen,
+                          ]}
+                          onPress={() => {
+                            setSelectedAssigneeId(member.userId);
+                            setSelectedAssigneeName(member.userName);
+                          }}
+                        >
+                          <Ionicons
+                            name="person"
+                            size={14}
+                            color={isSelected ? '#ffffff' : '#059669'}
+                            style={{ marginRight: 4 }}
+                          />
+                          <Text
+                            style={[
+                              styles.chipText,
+                              isSelected && styles.chipTextActive,
+                            ]}
+                          >
+                            {member.userName}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                )}
+              </View>
+            ) : null}
+
+            {/* Status */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Status</Text>
               <View style={styles.segmentedContainer}>
@@ -168,9 +352,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                       style={[styles.segmentButton, selected && styles.segmentButtonActive]}
                       onPress={() => setStatus(item)}
                     >
-                      <Text
-                        style={[styles.segmentText, selected && styles.segmentTextActive]}
-                      >
+                      <Text style={[styles.segmentText, selected && styles.segmentTextActive]}>
                         {item}
                       </Text>
                     </TouchableOpacity>
@@ -179,7 +361,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               </View>
             </View>
 
-            {/* Priority Selection */}
+            {/* Priority */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Priority</Text>
               <View style={styles.segmentedContainer}>
@@ -188,15 +370,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   return (
                     <TouchableOpacity
                       key={item}
-                      style={[
-                        styles.segmentButton,
-                        selected && styles.segmentButtonActive,
-                      ]}
+                      style={[styles.segmentButton, selected && styles.segmentButtonActive]}
                       onPress={() => setPriority(item)}
                     >
-                      <Text
-                        style={[styles.segmentText, selected && styles.segmentTextActive]}
-                      >
+                      <Text style={[styles.segmentText, selected && styles.segmentTextActive]}>
                         {item}
                       </Text>
                     </TouchableOpacity>
@@ -205,12 +382,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               </View>
             </View>
 
-            {/* Due Date Input */}
+            {/* Due Date */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Due Date (YYYY-MM-DD)</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. 2026-10-15"
+                placeholder="e.g. 2026-10-25"
                 placeholderTextColor="#94a3b8"
                 value={dueDate}
                 onChangeText={setDueDate}
@@ -218,21 +395,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </View>
           </ScrollView>
 
-          {/* Action Buttons */}
+          {/* Footer */}
           <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={onClose}
-              disabled={loading}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={onClose} disabled={loading}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleSave}
-              disabled={loading}
-            >
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={loading}>
               {loading ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
@@ -311,10 +480,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#334155',
     marginBottom: 6,
+  },
+  subHint: {
+    fontSize: 12,
+    color: '#94a3b8',
+    fontStyle: 'italic',
   },
   requiredAsterisk: {
     color: '#ef4444',
@@ -334,8 +508,39 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff5f5',
   },
   textArea: {
-    minHeight: 75,
+    minHeight: 70,
     paddingTop: 10,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    marginVertical: 4,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
+    borderColor: '#e2e8f0',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  chipActive: {
+    backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
+  },
+  chipActiveGreen: {
+    backgroundColor: '#059669',
+    borderColor: '#059669',
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  chipTextActive: {
+    color: '#ffffff',
   },
   segmentedContainer: {
     flexDirection: 'row',
@@ -352,11 +557,6 @@ const styles = StyleSheet.create({
   },
   segmentButtonActive: {
     backgroundColor: '#2563eb',
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
   },
   segmentText: {
     fontSize: 13,

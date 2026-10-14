@@ -39,6 +39,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
 
   return (
     <View style={styles.card}>
+      {/* Top Meta: Status & Priority Badges + Actions */}
       <View style={styles.headerRow}>
         <View style={styles.badgeGroup}>
           {/* Status Badge */}
@@ -58,35 +59,63 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
             onPress={() => onEdit(task)}
             accessibilityLabel="Edit Task"
           >
-            <Ionicons name="pencil-outline" size={18} color="#2563eb" />
+            <Ionicons name="pencil-outline" size={17} color="#2563eb" />
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.iconButton, styles.deleteButton]}
             onPress={() => task.id && onDelete(task.id, task.title)}
             accessibilityLabel="Delete Task"
           >
-            <Ionicons name="trash-outline" size={18} color="#dc2626" />
+            <Ionicons name="trash-outline" size={17} color="#dc2626" />
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* Task Title */}
       <Text style={styles.title}>{task.title}</Text>
 
+      {/* Optional Description */}
       {task.description ? (
         <Text style={styles.description} numberOfLines={3}>
           {task.description}
         </Text>
       ) : null}
 
+      {/* Exam 2: Team & Assignee Meta Row */}
+      <View style={styles.teamAssigneeRow}>
+        {task.teamName ? (
+          <View style={styles.teamTag}>
+            <Ionicons name="people-outline" size={13} color="#2563eb" />
+            <Text style={styles.teamTagText} numberOfLines={1}>
+              {task.teamName}
+            </Text>
+          </View>
+        ) : null}
+
+        {task.assigneeName ? (
+          <View style={styles.assigneeTag}>
+            <Ionicons name="person-circle-outline" size={14} color="#059669" />
+            <Text style={styles.assigneeTagText} numberOfLines={1}>
+              {task.assigneeName}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.unassignedTag}>
+            <Text style={styles.unassignedText}>Unassigned</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Footer: Due Date */}
       <View style={styles.footer}>
         {task.dueDate ? (
           <View style={styles.metaItem}>
-            <Ionicons name="calendar-outline" size={14} color="#64748b" />
+            <Ionicons name="calendar-outline" size={13} color="#64748b" />
             <Text style={styles.metaText}>Due: {task.dueDate}</Text>
           </View>
         ) : (
           <View style={styles.metaItem}>
-            <Ionicons name="time-outline" size={14} color="#94a3b8" />
+            <Ionicons name="time-outline" size={13} color="#94a3b8" />
             <Text style={[styles.metaText, { color: '#94a3b8' }]}>No due date</Text>
           </View>
         )}
@@ -113,7 +142,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   badgeGroup: {
     flexDirection: 'row',
@@ -150,7 +179,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#0f172a',
     marginBottom: 6,
   },
@@ -158,7 +187,59 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#475569',
     lineHeight: 20,
-    marginBottom: 12,
+    marginBottom: 10,
+  },
+  teamAssigneeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  teamTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#eff6ff',
+    borderColor: '#bfdbfe',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    maxWidth: '50%',
+  },
+  teamTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#1d4ed8',
+  },
+  assigneeTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    maxWidth: '50%',
+  },
+  assigneeTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#047857',
+  },
+  unassignedTag: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  unassignedText: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontStyle: 'italic',
   },
   footer: {
     flexDirection: 'row',

@@ -3,6 +3,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
   User,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
@@ -86,4 +89,24 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
     console.error('Error fetching user profile:', error);
     return null;
   }
+};
+
+/**
+ * Change the user's password with re-authentication
+ */
+export const changeUserPassword = async (
+  currentPass: string,
+  newPass: string
+): Promise<void> => {
+  const user = auth.currentUser;
+  if (!user || !user.email) {
+    throw new Error('No user is currently authenticated.');
+  }
+
+  // 1. Re-authenticate with current credentials
+  const credential = EmailAuthProvider.credential(user.email, currentPass);
+  await reauthenticateWithCredential(user, credential);
+
+  // 2. Update to new password
+  await updatePassword(user, newPass);
 };

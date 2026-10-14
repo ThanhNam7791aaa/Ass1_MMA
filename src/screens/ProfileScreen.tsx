@@ -7,14 +7,80 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { changeUserPassword } from '../services/authService';
 
 export const ProfileScreen: React.FC = () => {
   const { user, userProfile, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
+
+  // Password change states
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [changingPass, setChangingPass] = useState(false);
+
+  const handleClosePasswordModal = () => {
+    if (changingPass) return;
+    setPasswordModalVisible(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowCurrentPass(false);
+    setShowNewPass(false);
+    setShowConfirmPass(false);
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword) {
+      Alert.alert('Required', 'Please enter your current password.');
+      return;
+    }
+    if (!newPassword) {
+      Alert.alert('Required', 'Please enter your new password.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      Alert.alert('Validation', 'New password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Mismatch', 'New password and confirmation do not match.');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      Alert.alert('Notice', 'New password cannot be the same as your current password.');
+      return;
+    }
+
+    try {
+      setChangingPass(true);
+      await changeUserPassword(currentPassword, newPassword);
+      handleClosePasswordModal();
+      Alert.alert('Success', 'Your password has been changed successfully!');
+    } catch (error: any) {
+      let message = error?.message || 'Failed to change password.';
+      if (error?.code === 'auth/invalid-credential' || error?.code === 'auth/wrong-password') {
+        message = 'Current password is incorrect. Please try again.';
+      } else if (error?.code === 'auth/weak-password') {
+        message = 'New password is too weak. Please use at least 6 characters.';
+      } else if (error?.code === 'auth/too-many-requests') {
+        message = 'Too many attempts. Please try again later.';
+      }
+      Alert.alert('Password Change Failed', message);
+    } finally {
+      setChangingPass(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -102,6 +168,28 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* Security Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionHeader}>Security & Credentials</Text>
+
+          <TouchableOpacity
+            style={styles.actionRow}
+            onPress={() => setPasswordModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.actionIconWrapper}>
+              <Ionicons name="key-outline" size={20} color="#4f46e5" />
+            </View>
+            <View style={styles.actionTextWrapper}>
+              <Text style={styles.actionTitle}>Change Password</Text>
+              <Text style={styles.actionSubtitle}>
+                Update your account password securely
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+          </TouchableOpacity>
+        </View>
+
         {/* Sign Out Button */}
         <TouchableOpacity
           style={styles.logoutButton}
@@ -125,6 +213,131 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.appFooterSub}>Firebase Auth & Cloud Firestore Real-time</Text>
         </View>
       </ScrollView>
+
+      {/* Change Password Modal */}
+      <Modal
+        visible={passwordModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleClosePasswordModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalIconBox}>
+                <Ionicons name="key-outline" size={20} color="#4f46e5" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalTitle}>Change Password</Text>
+                <Text style={styles.modalSubtitle}>
+                  Update your account password
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleClosePasswordModal}
+                style={styles.modalCloseBtn}
+                disabled={changingPass}
+              >
+                <Ionicons name="close" size={20} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Current Password */}
+            <Text style={styles.inputLabel}>Current Password *</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="lock-closed-outline" size={18} color="#94a3b8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Enter current password"
+                placeholderTextColor="#94a3b8"
+                secureTextEntry={!showCurrentPass}
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setShowCurrentPass(!showCurrentPass)}
+                style={styles.eyeBtn}
+              >
+                <Ionicons
+                  name={showCurrentPass ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color="#64748b"
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* New Password */}
+            <Text style={styles.inputLabel}>New Password *</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="key-outline" size={18} color="#94a3b8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="At least 6 characters"
+                placeholderTextColor="#94a3b8"
+                secureTextEntry={!showNewPass}
+                value={newPassword}
+                onChangeText={setNewPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setShowNewPass(!showNewPass)}
+                style={styles.eyeBtn}
+              >
+                <Ionicons
+                  name={showNewPass ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color="#64748b"
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Confirm New Password */}
+            <Text style={styles.inputLabel}>Confirm New Password *</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="checkmark-done-outline" size={18} color="#94a3b8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Re-enter new password"
+                placeholderTextColor="#94a3b8"
+                secureTextEntry={!showConfirmPass}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPass(!showConfirmPass)}
+                style={styles.eyeBtn}
+              >
+                <Ionicons
+                  name={showConfirmPass ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color="#64748b"
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.modalActionRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={handleClosePasswordModal}
+                disabled={changingPass}
+              >
+                <Text style={styles.modalCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalSaveBtn, changingPass && { opacity: 0.7 }]}
+                onPress={handleChangePassword}
+                disabled={changingPass}
+              >
+                {changingPass ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={styles.modalSaveBtnText}>Update</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -293,5 +506,142 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#cbd5e1',
     marginTop: 2,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  actionIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#eef2ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  actionTextWrapper: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 22,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  modalIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#eef2ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 6,
+    marginTop: 10,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  modalInput: {
+    flex: 1,
+    paddingVertical: 11,
+    fontSize: 14,
+    color: '#0f172a',
+  },
+  eyeBtn: {
+    padding: 6,
+  },
+  modalActionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  modalSaveBtn: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: '#4f46e5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  modalSaveBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ffffff',
   },
 });

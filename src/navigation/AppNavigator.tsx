@@ -1,7 +1,13 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+
+import { useAuth } from '../context/AuthContext';
+import { LoginScreen } from '../screens/LoginScreen';
+import { SignUpScreen } from '../screens/SignUpScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { TeamsScreen } from '../screens/TeamsScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
@@ -12,65 +18,112 @@ export type RootTabParamList = {
   Profile: undefined;
 };
 
+export type AuthStackParamList = {
+  Login: undefined;
+  SignUp: undefined;
+};
+
+export type AppStackParamList = {
+  MainTabs: undefined;
+  TeamDetail: { teamId: string; teamName: string };
+  Chat: { teamId: string; teamName: string };
+};
+
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const AppStack = createNativeStackNavigator<AppStackParamList>();
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
+const MainTabs: React.FC = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: '#2563eb',
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarStyle: {
+          backgroundColor: '#ffffff',
+          borderTopColor: '#e2e8f0',
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap = 'checkbox-outline';
+
+          if (route.name === 'Home') {
+            iconName = focused ? 'checkbox' : 'checkbox-outline';
+          } else if (route.name === 'Teams') {
+            iconName = focused ? 'people' : 'people-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarLabel: 'Tasks',
+        }}
+      />
+      <Tab.Screen
+        name="Teams"
+        component={TeamsScreen}
+        options={{
+          tabBarLabel: 'Teams',
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Profile',
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
 export const AppNavigator: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: '#2563eb',
-          tabBarInactiveTintColor: '#94a3b8',
-          tabBarStyle: {
-            backgroundColor: '#ffffff',
-            borderTopColor: '#e2e8f0',
-            borderTopWidth: 1,
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 6,
-          },
-          tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '600',
-          },
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName: keyof typeof Ionicons.glyphMap = 'checkbox-outline';
-
-            if (route.name === 'Home') {
-              iconName = focused ? 'checkbox' : 'checkbox-outline';
-            } else if (route.name === 'Teams') {
-              iconName = focused ? 'people' : 'people-outline';
-            } else if (route.name === 'Profile') {
-              iconName = focused ? 'person' : 'person-outline';
-            }
-
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-        })}
-      >
-        <Tab.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            tabBarLabel: 'Tasks',
-          }}
-        />
-        <Tab.Screen
-          name="Teams"
-          component={TeamsScreen}
-          options={{
-            tabBarLabel: 'Teams',
-          }}
-        />
-        <Tab.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{
-            tabBarLabel: 'Profile',
-          }}
-        />
-      </Tab.Navigator>
+      {!user ? (
+        <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+          <AuthStack.Screen name="Login" component={LoginScreen} />
+          <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+        </AuthStack.Navigator>
+      ) : (
+        <AppStack.Navigator screenOptions={{ headerShown: false }}>
+          <AppStack.Screen name="MainTabs" component={MainTabs} />
+        </AppStack.Navigator>
+      )}
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

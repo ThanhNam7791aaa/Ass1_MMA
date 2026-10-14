@@ -99,25 +99,27 @@ export const TeamsScreen: React.FC<TeamsScreenProps> = ({ navigation }) => {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerTitleGroup}>
             <Text style={styles.headerTitle}>Teams & Spaces</Text>
-            <Text style={styles.headerSubtitle}>
-              Collaborate on shared tasks and group chats
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+              Collaborate on shared tasks
             </Text>
           </View>
           <View style={styles.actionButtonGroup}>
             <TouchableOpacity
               style={styles.joinButton}
               onPress={() => setJoinModalVisible(true)}
+              activeOpacity={0.8}
             >
-              <Ionicons name="key-outline" size={16} color="#2563eb" />
+              <Ionicons name="key-outline" size={14} color="#4f46e5" />
               <Text style={styles.joinButtonText}>Join</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.createButton}
               onPress={() => setCreateModalVisible(true)}
+              activeOpacity={0.8}
             >
-              <Ionicons name="add" size={18} color="#ffffff" />
+              <Ionicons name="add" size={16} color="#ffffff" />
               <Text style={styles.createButtonText}>Create</Text>
             </TouchableOpacity>
           </View>
@@ -330,17 +332,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingTop: 14,
     paddingBottom: 14,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
+  headerTitleGroup: {
+    flex: 1,
+    paddingRight: 8,
+  },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0f172a',
+    letterSpacing: -0.3,
   },
   headerSubtitle: {
     fontSize: 12,
@@ -349,7 +356,8 @@ const styles = StyleSheet.create({
   },
   actionButtonGroup: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
+    flexShrink: 0,
   },
   joinButton: {
     flexDirection: 'row',
@@ -358,22 +366,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e7ff',
     backgroundColor: '#eef2ff',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: 10,
   },
   joinButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#4f46e5',
   },
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
     backgroundColor: '#4f46e5',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 10,
     shadowColor: '#4f46e5',
     shadowOffset: { width: 0, height: 2 },
@@ -382,7 +390,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   createButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#ffffff',
   },

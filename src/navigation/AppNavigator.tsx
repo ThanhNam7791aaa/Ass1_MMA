@@ -46,23 +46,18 @@ const MainTabs: React.FC = () => {
           backgroundColor: '#ffffff',
           borderTopColor: '#f1f5f9',
           borderTopWidth: 1,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
-          shadowColor: '#0f172a',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.04,
-          shadowRadius: 10,
+          height: 60,
+          paddingBottom: 6,
+          paddingTop: 6,
           elevation: 8,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '700',
-          letterSpacing: 0.2,
-          marginTop: 2,
+          marginTop: -2,
         },
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap = 'checkbox-outline';
+          let iconName: keyof typeof Ionicons.glyphMap = 'checkmark-circle-outline';
 
           if (route.name === 'Home') {
             iconName = focused ? 'checkmark-circle' : 'checkmark-circle-outline';
@@ -72,20 +67,7 @@ const MainTabs: React.FC = () => {
             iconName = focused ? 'person' : 'person-outline';
           }
 
-          return (
-            <View
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingHorizontal: 16,
-                paddingVertical: 4,
-                borderRadius: 16,
-                backgroundColor: focused ? '#eef2ff' : 'transparent',
-              }}
-            >
-              <Ionicons name={iconName} size={22} color={color} />
-            </View>
-          );
+          return <Ionicons name={iconName} size={size || 24} color={color} />;
         },
       })}
     >

@@ -107,16 +107,23 @@ export const ProfileScreen: React.FC = () => {
           style={styles.logoutButton}
           onPress={handleLogout}
           disabled={loggingOut}
+          activeOpacity={0.8}
         >
           {loggingOut ? (
-            <ActivityIndicator color="#dc2626" size="small" />
+            <ActivityIndicator color="#e11d48" size="small" />
           ) : (
             <>
-              <Ionicons name="log-out-outline" size={20} color="#dc2626" />
+              <Ionicons name="log-out-outline" size={19} color="#e11d48" />
               <Text style={styles.logoutText}>Sign Out</Text>
             </>
           )}
         </TouchableOpacity>
+
+        {/* Footer info */}
+        <View style={styles.appFooter}>
+          <Text style={styles.appFooterText}>TaskPulse • Practical Exam 2</Text>
+          <Text style={styles.appFooterSub}>Firebase Auth & Cloud Firestore Real-time</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -130,6 +137,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     alignItems: 'center',
+    paddingBottom: 40,
   },
   card: {
     width: '100%',
@@ -139,26 +147,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#f1f5f9',
     shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 10,
+    elevation: 3,
   },
   avatarCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: '#2563eb',
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    backgroundColor: '#4f46e5',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
-    shadowColor: '#2563eb',
+    borderWidth: 4,
+    borderColor: '#e0e7ff',
+    shadowColor: '#4f46e5',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    elevation: 5,
   },
   avatarInitial: {
     fontSize: 36,
@@ -167,8 +177,9 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0f172a',
+    letterSpacing: -0.3,
   },
   userEmail: {
     fontSize: 14,
@@ -179,8 +190,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#f0fdf4',
-    borderColor: '#bbf7d0',
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 5,
@@ -189,24 +200,29 @@ const styles = StyleSheet.create({
   },
   verifiedText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#15803d',
+    fontWeight: '700',
+    color: '#059669',
   },
   sectionCard: {
     width: '100%',
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 18,
+    borderRadius: 18,
+    padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#f1f5f9',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
   },
   sectionHeader: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
     color: '#475569',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     marginBottom: 14,
   },
   infoRow: {
@@ -215,10 +231,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   infoIconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#eff6ff',
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#eef2ff',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -228,17 +244,18 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 12,
+    fontWeight: '600',
     color: '#64748b',
   },
   infoValue: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#0f172a',
     marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
     marginVertical: 4,
   },
   logoutButton: {
@@ -247,15 +264,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
     borderWidth: 1,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 14,
+    shadowColor: '#e11d48',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
   },
   logoutText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#dc2626',
+    color: '#e11d48',
+  },
+  appFooter: {
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  appFooterText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#94a3b8',
+  },
+  appFooterSub: {
+    fontSize: 11,
+    color: '#cbd5e1',
+    marginTop: 2,
   },
 });

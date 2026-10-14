@@ -118,7 +118,7 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
             {team?.name || teamName}
           </Text>
           <TouchableOpacity onPress={handleShareCode} style={styles.shareCodeButton}>
-            <Ionicons name="share-outline" size={20} color="#2563eb" />
+            <Ionicons name="share-outline" size={20} color="#4f46e5" />
           </TouchableOpacity>
         </View>
 
@@ -126,7 +126,7 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
         <View style={styles.teamBanner}>
           <View style={styles.bannerRow}>
             <View style={styles.teamBadgeCircle}>
-              <Ionicons name="people" size={24} color="#2563eb" />
+              <Ionicons name="people" size={24} color="#4f46e5" />
             </View>
             <View style={styles.bannerInfo}>
               <Text style={styles.bannerName}>{team?.name || teamName}</Text>
@@ -143,6 +143,7 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
           {/* Action Row: Open Team Chat Button */}
           <TouchableOpacity
             style={styles.chatButton}
+            activeOpacity={0.8}
             onPress={() =>
               navigation.navigate('Chat', {
                 teamId,
@@ -161,11 +162,12 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
           <TouchableOpacity
             style={[styles.switchTab, activeTab === 'tasks' && styles.switchTabActive]}
             onPress={() => setActiveTab('tasks')}
+            activeOpacity={0.7}
           >
             <Ionicons
               name="checkbox-outline"
               size={16}
-              color={activeTab === 'tasks' ? '#2563eb' : '#64748b'}
+              color={activeTab === 'tasks' ? '#4f46e5' : '#64748b'}
             />
             <Text
               style={[styles.switchTabText, activeTab === 'tasks' && styles.switchTabTextActive]}
@@ -177,11 +179,12 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
           <TouchableOpacity
             style={[styles.switchTab, activeTab === 'members' && styles.switchTabActive]}
             onPress={() => setActiveTab('members')}
+            activeOpacity={0.7}
           >
             <Ionicons
               name="people-outline"
               size={16}
-              color={activeTab === 'members' ? '#2563eb' : '#64748b'}
+              color={activeTab === 'members' ? '#4f46e5' : '#64748b'}
             />
             <Text
               style={[styles.switchTabText, activeTab === 'members' && styles.switchTabTextActive]}
@@ -387,9 +390,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#2563eb',
-    paddingVertical: 12,
-    borderRadius: 10,
+    backgroundColor: '#4f46e5',
+    paddingVertical: 13,
+    borderRadius: 12,
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   chatButtonText: {
     fontSize: 14,
@@ -400,9 +408,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#ffffff',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: '#f1f5f9',
     gap: 10,
   },
   switchTab: {
@@ -411,14 +419,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#f1f5f9',
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   switchTabActive: {
-    backgroundColor: '#eff6ff',
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    backgroundColor: '#eef2ff',
+    borderColor: '#c7d2fe',
   },
   switchTabText: {
     fontSize: 13,
@@ -426,7 +435,7 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   switchTabTextActive: {
-    color: '#2563eb',
+    color: '#4f46e5',
     fontWeight: '700',
   },
   createTaskBar: {
@@ -434,22 +443,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 4,
+    paddingTop: 14,
+    paddingBottom: 6,
   },
   sectionHeaderTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#334155',
+    fontWeight: '800',
+    color: '#0f172a',
   },
   addTaskBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    backgroundColor: '#4f46e5',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   addTaskBtnText: {
     fontSize: 12,
@@ -464,17 +478,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#f1f5f9',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   memberAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#2563eb',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#4f46e5',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,

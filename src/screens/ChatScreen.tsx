@@ -95,7 +95,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
         {/* Messages List */}
         {loading ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color="#2563eb" />
+            <ActivityIndicator size="large" color="#4f46e5" />
             <Text style={styles.loadingText}>Connecting to team chat...</Text>
           </View>
         ) : (
@@ -107,6 +107,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
             renderItem={({ item }) => {
               const isMine = item.senderId === user?.uid;
+              const senderInitial = item.senderName?.charAt(0)?.toUpperCase() || '?';
               return (
                 <View
                   style={[
@@ -114,6 +115,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
                     isMine ? styles.messageRowMine : styles.messageRowOthers,
                   ]}
                 >
+                  {!isMine ? (
+                    <View style={styles.senderAvatar}>
+                      <Text style={styles.senderAvatarText}>{senderInitial}</Text>
+                    </View>
+                  ) : null}
                   <View
                     style={[
                       styles.bubble,
@@ -145,10 +151,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
             }}
             ListEmptyComponent={
               <View style={styles.emptyChat}>
-                <Ionicons name="chatbubbles-outline" size={48} color="#cbd5e1" />
-                <Text style={styles.emptyTitle}>No messages yet</Text>
+                <View style={styles.emptyChatIconBox}>
+                  <Ionicons name="chatbubbles" size={36} color="#818cf8" />
+                </View>
+                <Text style={styles.emptyTitle}>Start the Conversation</Text>
                 <Text style={styles.emptySubtitle}>
-                  Say hello to your teammates to start the conversation!
+                  Send your first message to coordinate with {teamName} members!
                 </Text>
               </View>
             }
@@ -205,20 +213,24 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f1f5f9',
   },
   backButton: {
-    padding: 6,
-    marginRight: 8,
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    marginRight: 10,
   },
   headerInfo: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
     color: '#0f172a',
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#64748b',
+    fontWeight: '500',
+    color: '#10b981',
+    marginTop: 1,
   },
   loadingBox: {
     flex: 1,
@@ -226,17 +238,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748b',
+    fontWeight: '600',
     marginTop: 10,
   },
   messageList: {
     padding: 16,
-    paddingBottom: 20,
+    paddingBottom: 24,
   },
   messageRow: {
     flexDirection: 'row',
     marginBottom: 12,
+    alignItems: 'flex-end',
+    gap: 8,
   },
   messageRowMine: {
     justifyContent: 'flex-end',
@@ -244,42 +259,59 @@ const styles = StyleSheet.create({
   messageRowOthers: {
     justifyContent: 'flex-start',
   },
+  senderAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#e0e7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  senderAvatarText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4f46e5',
+  },
   bubble: {
-    maxWidth: '78%',
-    borderRadius: 16,
+    maxWidth: '76%',
+    borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    shadowColor: '#000',
+    shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
   },
   bubbleMine: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#4f46e5',
     borderBottomRightRadius: 4,
+    shadowColor: '#4f46e5',
+    shadowOpacity: 0.2,
   },
   bubbleOthers: {
     backgroundColor: '#ffffff',
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#f1f5f9',
   },
   senderName: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#2563eb',
-    marginBottom: 4,
+    color: '#4f46e5',
+    marginBottom: 3,
   },
   messageText: {
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 20,
   },
   messageTextMine: {
     color: '#ffffff',
+    fontWeight: '400',
   },
   messageTextOthers: {
     color: '#0f172a',
+    fontWeight: '400',
   },
   timeText: {
     fontSize: 10,
@@ -287,7 +319,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   timeTextMine: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.75)',
   },
   timeTextOthers: {
     color: '#94a3b8',
@@ -295,20 +327,29 @@ const styles = StyleSheet.create({
   emptyChat: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 100,
+    paddingTop: 80,
     paddingHorizontal: 30,
+  },
+  emptyChatIconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#eef2ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   emptyTitle: {
     fontSize: 17,
-    fontWeight: '700',
-    color: '#334155',
-    marginTop: 12,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 4,
   },
   emptySubtitle: {
     fontSize: 13,
     color: '#94a3b8',
     textAlign: 'center',
-    marginTop: 4,
+    lineHeight: 18,
   },
   inputBar: {
     flexDirection: 'row',
@@ -317,28 +358,37 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: '#f1f5f9',
     gap: 10,
   },
   input: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 20,
+    backgroundColor: '#f8fafc',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     maxHeight: 100,
-    fontSize: 15,
+    fontSize: 14,
     color: '#0f172a',
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#2563eb',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#4f46e5',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   sendButtonDisabled: {
     backgroundColor: '#cbd5e1',
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });

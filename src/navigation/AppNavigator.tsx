@@ -40,32 +40,52 @@ const MainTabs: React.FC = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: '#2563eb',
+        tabBarActiveTintColor: '#4f46e5',
         tabBarInactiveTintColor: '#94a3b8',
         tabBarStyle: {
           backgroundColor: '#ffffff',
-          borderTopColor: '#e2e8f0',
+          borderTopColor: '#f1f5f9',
           borderTopWidth: 1,
-          height: 60,
+          height: 64,
           paddingBottom: 8,
-          paddingTop: 6,
+          paddingTop: 8,
+          shadowColor: '#0f172a',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.04,
+          shadowRadius: 10,
+          elevation: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
+          fontSize: 11,
+          fontWeight: '700',
+          letterSpacing: 0.2,
+          marginTop: 2,
         },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'checkbox-outline';
 
           if (route.name === 'Home') {
-            iconName = focused ? 'checkbox' : 'checkbox-outline';
+            iconName = focused ? 'checkmark-circle' : 'checkmark-circle-outline';
           } else if (route.name === 'Teams') {
             iconName = focused ? 'people' : 'people-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return (
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingHorizontal: 16,
+                paddingVertical: 4,
+                borderRadius: 16,
+                backgroundColor: focused ? '#eef2ff' : 'transparent',
+              }}
+            >
+              <Ionicons name={iconName} size={22} color={color} />
+            </View>
+          );
         },
       })}
     >
@@ -87,7 +107,7 @@ const MainTabs: React.FC = () => {
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Account',
         }}
       />
     </Tab.Navigator>

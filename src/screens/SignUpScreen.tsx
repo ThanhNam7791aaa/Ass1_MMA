@@ -84,7 +84,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
           {/* Header */}
           <View style={styles.brandContainer}>
             <View style={styles.logoCircle}>
-              <Ionicons name="person-add" size={38} color="#2563eb" />
+              <Ionicons name="person-add" size={34} color="#ffffff" />
             </View>
             <Text style={styles.appTitle}>Create Account</Text>
             <Text style={styles.appTagline}>
@@ -253,20 +253,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logoCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#eff6ff',
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: '#4f46e5',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#dbeafe',
+    marginBottom: 12,
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   appTitle: {
     fontSize: 26,
     fontWeight: '800',
     color: '#0f172a',
+    letterSpacing: -0.4,
   },
   appTagline: {
     fontSize: 13,
@@ -279,7 +283,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 22,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#f1f5f9',
     shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -290,17 +294,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
     borderWidth: 1,
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     marginBottom: 14,
   },
   errorText: {
-    color: '#b91c1c',
+    color: '#e11d48',
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
     flex: 1,
   },
   inputGroup: {
@@ -308,7 +312,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#334155',
     marginBottom: 6,
   },
@@ -317,9 +321,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8fafc',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: '#e2e8f0',
     borderRadius: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
   },
   inputIcon: {
     marginRight: 8,
@@ -327,28 +331,28 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: 11,
-    fontSize: 15,
+    fontSize: 14,
     color: '#0f172a',
   },
   eyeIcon: {
     padding: 4,
   },
   signUpButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#4f46e5',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   signUpText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
   footerRow: {
@@ -364,6 +368,6 @@ const styles = StyleSheet.create({
   loginLink: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2563eb',
+    color: '#4f46e5',
   },
 });

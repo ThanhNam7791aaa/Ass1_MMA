@@ -12,43 +12,46 @@ interface TaskCardProps {
 const getStatusColor = (status: TaskStatus) => {
   switch (status) {
     case 'Done':
-      return { bg: '#dcfce7', text: '#15803d', border: '#bbf7d0' };
+      return { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0', dot: '#10b981', accent: '#10b981' };
     case 'In Progress':
-      return { bg: '#dbeafe', text: '#1d4ed8', border: '#bfdbfe' };
+      return { bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe', dot: '#6366f1', accent: '#6366f1' };
     case 'To Do':
     default:
-      return { bg: '#fef3c7', text: '#b45309', border: '#fde68a' };
+      return { bg: '#fffbeb', text: '#b45309', border: '#fde68a', dot: '#f59e0b', accent: '#f59e0b' };
   }
 };
 
 const getPriorityColor = (priority: TaskPriority) => {
   switch (priority) {
     case 'High':
-      return { bg: '#ffe4e6', text: '#be123c' };
+      return { bg: '#fff1f2', text: '#e11d48', icon: 'flame' as const };
     case 'Medium':
-      return { bg: '#ffedd5', text: '#c2410c' };
+      return { bg: '#fff7ed', text: '#ea580c', icon: 'alert-circle-outline' as const };
     case 'Low':
     default:
-      return { bg: '#f1f5f9', text: '#475569' };
+      return { bg: '#f8fafc', text: '#64748b', icon: 'flag-outline' as const };
   }
 };
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
   const statusColor = getStatusColor(task.status);
-  const priorityColor = getPriorityColor(task.priority);
+  const priorityInfo = getPriorityColor(task.priority);
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { borderLeftColor: statusColor.accent }]}>
       {/* Top Meta: Status & Priority Badges + Actions */}
       <View style={styles.headerRow}>
         <View style={styles.badgeGroup}>
-          {/* Status Badge */}
-          <View style={[styles.badge, { backgroundColor: statusColor.bg, borderColor: statusColor.border }]}>
-            <Text style={[styles.badgeText, { color: statusColor.text }]}>{task.status}</Text>
+          {/* Status Badge with Dot */}
+          <View style={[styles.statusBadge, { backgroundColor: statusColor.bg, borderColor: statusColor.border }]}>
+            <View style={[styles.statusDot, { backgroundColor: statusColor.dot }]} />
+            <Text style={[styles.statusBadgeText, { color: statusColor.text }]}>{task.status}</Text>
           </View>
+
           {/* Priority Badge */}
-          <View style={[styles.badge, { backgroundColor: priorityColor.bg }]}>
-            <Text style={[styles.badgeText, { color: priorityColor.text }]}>{task.priority}</Text>
+          <View style={[styles.priorityBadge, { backgroundColor: priorityInfo.bg }]}>
+            <Ionicons name={priorityInfo.icon} size={12} color={priorityInfo.text} />
+            <Text style={[styles.priorityBadgeText, { color: priorityInfo.text }]}>{task.priority}</Text>
           </View>
         </View>
 
@@ -58,15 +61,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
             style={styles.iconButton}
             onPress={() => onEdit(task)}
             accessibilityLabel="Edit Task"
+            activeOpacity={0.7}
           >
-            <Ionicons name="pencil-outline" size={17} color="#2563eb" />
+            <Ionicons name="create-outline" size={17} color="#4f46e5" />
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.iconButton, styles.deleteButton]}
             onPress={() => task.id && onDelete(task.id, task.title)}
             accessibilityLabel="Delete Task"
+            activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={17} color="#dc2626" />
+            <Ionicons name="trash-outline" size={17} color="#ef4444" />
           </TouchableOpacity>
         </View>
       </View>
@@ -76,7 +81,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
 
       {/* Optional Description */}
       {task.description ? (
-        <Text style={styles.description} numberOfLines={3}>
+        <Text style={styles.description} numberOfLines={2}>
           {task.description}
         </Text>
       ) : null}
@@ -85,7 +90,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
       <View style={styles.teamAssigneeRow}>
         {task.teamName ? (
           <View style={styles.teamTag}>
-            <Ionicons name="people-outline" size={13} color="#2563eb" />
+            <Ionicons name="people" size={12} color="#4f46e5" />
             <Text style={styles.teamTagText} numberOfLines={1}>
               {task.teamName}
             </Text>
@@ -94,7 +99,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
 
         {task.assigneeName ? (
           <View style={styles.assigneeTag}>
-            <Ionicons name="person-circle-outline" size={14} color="#059669" />
+            <Ionicons name="person-circle" size={14} color="#059669" />
             <Text style={styles.assigneeTagText} numberOfLines={1}>
               {task.assigneeName}
             </Text>
@@ -127,39 +132,59 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#f1f5f9',
+    borderLeftWidth: 4,
     shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   badgeGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'transparent',
+    gap: 6,
   },
-  badgeText: {
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    textTransform: 'uppercase',
+    letterSpacing: 0.2,
+  },
+  priorityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  priorityBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   actions: {
     flexDirection: 'row',
@@ -169,25 +194,29 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 32,
     height: 32,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
+    borderRadius: 10,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   deleteButton: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
   },
   title: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
     color: '#0f172a',
     marginBottom: 6,
+    letterSpacing: -0.2,
   },
   description: {
-    fontSize: 14,
-    color: '#475569',
-    lineHeight: 20,
-    marginBottom: 10,
+    fontSize: 13,
+    color: '#64748b',
+    lineHeight: 19,
+    marginBottom: 12,
   },
   teamAssigneeRow: {
     flexDirection: 'row',
@@ -199,54 +228,56 @@ const styles = StyleSheet.create({
   teamTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#eff6ff',
-    borderColor: '#bfdbfe',
+    gap: 5,
+    backgroundColor: '#eef2ff',
+    borderColor: '#c7d2fe',
     borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
     maxWidth: '50%',
   },
   teamTagText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#1d4ed8',
+    fontWeight: '700',
+    color: '#4338ca',
   },
   assigneeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#ecfdf5',
-    borderColor: '#a7f3d0',
+    gap: 5,
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
     borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
     maxWidth: '50%',
   },
   assigneeTagText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#047857',
+    fontWeight: '700',
+    color: '#15803d',
   },
   unassignedTag: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0',
+    borderWidth: 1,
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   unassignedText: {
     fontSize: 11,
     color: '#94a3b8',
-    fontStyle: 'italic',
+    fontWeight: '500',
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 8,
+    paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: '#f8fafc',
   },
   metaItem: {
     flexDirection: 'row',
@@ -254,7 +285,8 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   metaText: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '500',
     color: '#64748b',
   },
 });

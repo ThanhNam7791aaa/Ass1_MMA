@@ -67,7 +67,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           {/* Header Branding */}
           <View style={styles.brandContainer}>
             <View style={styles.logoCircle}>
-              <Ionicons name="checkbox" size={42} color="#2563eb" />
+              <Ionicons name="checkbox" size={38} color="#ffffff" />
             </View>
             <Text style={styles.appTitle}>TaskPulse</Text>
             <Text style={styles.appTagline}>
@@ -84,7 +84,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
             {error ? (
               <View style={styles.errorBox}>
-                <Ionicons name="alert-circle" size={18} color="#ef4444" />
+                <Ionicons name="alert-circle" size={18} color="#e11d48" />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
@@ -153,11 +153,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               style={styles.signInButton}
               onPress={handleLogin}
               disabled={loading}
+              activeOpacity={0.8}
             >
               {loading ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <Text style={styles.signInText}>Sign In</Text>
+                <Text style={styles.signInText}>Sign In to Account</Text>
               )}
             </TouchableOpacity>
 
@@ -165,7 +166,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             <View style={styles.footerRow}>
               <Text style={styles.footerText}>Don't have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-                <Text style={styles.signUpLink}>Sign Up</Text>
+                <Text style={styles.signUpLink}>Create one</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -196,13 +197,16 @@ const styles = StyleSheet.create({
   logoCircle: {
     width: 76,
     height: 76,
-    borderRadius: 38,
-    backgroundColor: '#eff6ff',
+    borderRadius: 24,
+    backgroundColor: '#4f46e5',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#dbeafe',
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   appTitle: {
     fontSize: 28,
@@ -220,7 +224,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#f1f5f9',
     shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -229,7 +233,7 @@ const styles = StyleSheet.create({
   },
   formTitle: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0f172a',
   },
   formSubtitle: {
@@ -242,17 +246,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
     borderWidth: 1,
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     marginBottom: 16,
   },
   errorText: {
-    color: '#b91c1c',
+    color: '#e11d48',
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
     flex: 1,
   },
   inputGroup: {
@@ -260,7 +264,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#334155',
     marginBottom: 6,
   },
@@ -269,9 +273,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8fafc',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: '#e2e8f0',
     borderRadius: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
   },
   inputIcon: {
     marginRight: 8,
@@ -279,28 +283,28 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: 12,
-    fontSize: 15,
+    fontSize: 14,
     color: '#0f172a',
   },
   eyeIcon: {
     padding: 4,
   },
   signInButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#4f46e5',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   signInText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
   footerRow: {
@@ -316,6 +320,6 @@ const styles = StyleSheet.create({
   signUpLink: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2563eb',
+    color: '#4f46e5',
   },
 });

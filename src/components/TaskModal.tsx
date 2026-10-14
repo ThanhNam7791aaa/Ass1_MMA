@@ -259,7 +259,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                       <Ionicons
                         name="people"
                         size={14}
-                        color={isSelected ? '#ffffff' : '#2563eb'}
+                        color={isSelected ? '#ffffff' : '#4f46e5'}
                         style={{ marginRight: 4 }}
                       />
                       <Text
@@ -527,8 +527,8 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   chipActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
+    backgroundColor: '#4f46e5',
+    borderColor: '#4f46e5',
   },
   chipActiveGreen: {
     backgroundColor: '#059669',
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   segmentButtonActive: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#4f46e5',
   },
   segmentText: {
     fontSize: 13,
@@ -573,26 +573,31 @@ const styles = StyleSheet.create({
   cancelButton: {
     flex: 1,
     paddingVertical: 13,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#475569',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748b',
   },
   saveButton: {
     flex: 2,
     paddingVertical: 13,
-    borderRadius: 10,
-    backgroundColor: '#2563eb',
+    borderRadius: 12,
+    backgroundColor: '#4f46e5',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   saveButtonText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: '#ffffff',
   },

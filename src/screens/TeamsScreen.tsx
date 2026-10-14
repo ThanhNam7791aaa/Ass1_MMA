@@ -142,45 +142,58 @@ export const TeamsScreen: React.FC<TeamsScreenProps> = ({ navigation }) => {
                 colors={['#2563eb']}
               />
             }
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.teamCard}
-                onPress={() =>
-                  navigation.navigate('TeamDetail', {
-                    teamId: item.id,
-                    teamName: item.name,
-                  })
-                }
-              >
-                <View style={styles.cardHeader}>
-                  <View style={styles.teamIconBox}>
-                    <Ionicons name="people" size={22} color="#2563eb" />
+            renderItem={({ item }) => {
+              const teamInitials = item.name ? item.name.substring(0, 2).toUpperCase() : 'TM';
+              const isOwner = item.ownerId === user?.uid;
+              return (
+                <TouchableOpacity
+                  style={styles.teamCard}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    navigation.navigate('TeamDetail', {
+                      teamId: item.id,
+                      teamName: item.name,
+                    })
+                  }
+                >
+                  <View style={styles.cardHeader}>
+                    <View style={styles.teamIconBox}>
+                      <Text style={styles.teamInitialsText}>{teamInitials}</Text>
+                    </View>
+                    <View style={styles.teamTitleBox}>
+                      <Text style={styles.teamCardName}>{item.name}</Text>
+                      <View style={styles.ownerRow}>
+                        <View style={[styles.ownerRoleBadge, isOwner ? styles.ownerBadgeRole : styles.memberBadgeRole]}>
+                          <Text style={[styles.ownerRoleText, isOwner ? styles.ownerRoleTextOwner : styles.ownerRoleTextMember]}>
+                            {isOwner ? 'Owner' : 'Member'}
+                          </Text>
+                        </View>
+                        <Text style={styles.ownerText}>
+                          {isOwner ? 'Created by you' : `By ${item.ownerName || 'Admin'}`}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.codeBadge}>
+                      <Ionicons name="key" size={11} color="#059669" />
+                      <Text style={styles.codeText}>{item.code}</Text>
+                    </View>
                   </View>
-                  <View style={styles.teamTitleBox}>
-                    <Text style={styles.teamCardName}>{item.name}</Text>
-                    <Text style={styles.ownerText}>
-                      By {item.ownerId === user?.uid ? 'You (Owner)' : item.ownerName || 'Owner'}
+
+                  {item.description ? (
+                    <Text style={styles.teamCardDesc} numberOfLines={2}>
+                      {item.description}
                     </Text>
-                  </View>
-                  <View style={styles.codeBadge}>
-                    <Text style={styles.codeText}>{item.code}</Text>
-                  </View>
-                </View>
+                  ) : null}
 
-                {item.description ? (
-                  <Text style={styles.teamCardDesc} numberOfLines={2}>
-                    {item.description}
-                  </Text>
-                ) : null}
-
-                <View style={styles.cardFooter}>
-                  <View style={styles.footerLink}>
-                    <Text style={styles.footerLinkText}>View Members & Tasks</Text>
-                    <Ionicons name="chevron-forward" size={15} color="#2563eb" />
+                  <View style={styles.cardFooter}>
+                    <View style={styles.footerLink}>
+                      <Text style={styles.footerLinkText}>Open Team Workspace</Text>
+                      <Ionicons name="arrow-forward" size={14} color="#4f46e5" />
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            )}
+                </TouchableOpacity>
+              );
+            }}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Ionicons name="people-outline" size={54} color="#cbd5e1" />
@@ -342,26 +355,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#eff6ff',
-    borderColor: '#bfdbfe',
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    borderColor: '#e0e7ff',
+    backgroundColor: '#eef2ff',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
   },
   joinButtonText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#2563eb',
+    color: '#4f46e5',
   },
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: '#4f46e5',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   createButtonText: {
     fontSize: 13,
@@ -378,6 +396,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: '#64748b',
+    fontWeight: '600',
   },
   listContent: {
     padding: 16,
@@ -389,25 +408,36 @@ const styles = StyleSheet.create({
     padding: 18,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#f1f5f9',
     shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   teamIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#eff6ff',
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: '#4f46e5',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  teamInitialsText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   teamTitleBox: {
     flex: 1,
@@ -417,29 +447,58 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0f172a',
   },
+  ownerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 3,
+  },
+  ownerRoleBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  ownerBadgeRole: {
+    backgroundColor: '#fef3c7',
+  },
+  memberBadgeRole: {
+    backgroundColor: '#f1f5f9',
+  },
+  ownerRoleText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  ownerRoleTextOwner: {
+    color: '#b45309',
+  },
+  ownerRoleTextMember: {
+    color: '#64748b',
+  },
   ownerText: {
     fontSize: 12,
     color: '#64748b',
-    marginTop: 2,
   },
   codeBadge: {
-    backgroundColor: '#f1f5f9',
-    borderColor: '#cbd5e1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
     borderWidth: 1,
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   codeText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#334155',
+    color: '#047857',
     letterSpacing: 1,
   },
   teamCardDesc: {
-    fontSize: 14,
-    color: '#475569',
-    lineHeight: 20,
+    fontSize: 13,
+    color: '#64748b',
+    lineHeight: 19,
     marginTop: 10,
   },
   cardFooter: {
@@ -448,17 +507,17 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: '#f8fafc',
   },
   footerLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   footerLinkText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#2563eb',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4f46e5',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -468,8 +527,8 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#334155',
+    fontWeight: '800',
+    color: '#0f172a',
     marginTop: 14,
   },
   emptySubtitle: {
@@ -488,11 +547,16 @@ const styles = StyleSheet.create({
   modalCard: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
-    padding: 22,
+    padding: 24,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
   },
   modalTitle: {
     fontSize: 19,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0f172a',
   },
   modalSubtitle: {
@@ -503,18 +567,18 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#334155',
     marginBottom: 6,
   },
   modalInput: {
     backgroundColor: '#f8fafc',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: 15,
+    fontSize: 14,
     color: '#0f172a',
     marginBottom: 14,
   },
@@ -523,10 +587,11 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   codeInput: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    letterSpacing: 4,
+    letterSpacing: 5,
     textAlign: 'center',
+    color: '#4f46e5',
   },
   modalActionRow: {
     flexDirection: 'row',
@@ -536,21 +601,26 @@ const styles = StyleSheet.create({
   modalCancelBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
   },
   modalCancelText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
+    fontWeight: '700',
+    color: '#64748b',
   },
   modalConfirmBtn: {
     flex: 2,
     paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: '#2563eb',
+    borderRadius: 12,
+    backgroundColor: '#4f46e5',
     alignItems: 'center',
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   modalConfirmText: {
     fontSize: 14,

@@ -19,6 +19,7 @@ import {
   subscribeUserTeams,
   createTeam,
   joinTeamByCode,
+  updateTeam,
 } from '../services/teamService';
 
 interface TeamsScreenProps {
@@ -40,6 +41,41 @@ export const TeamsScreen: React.FC<TeamsScreenProps> = ({ navigation }) => {
   const [joinModalVisible, setJoinModalVisible] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [joining, setJoining] = useState(false);
+
+  // Edit Team state
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingTeamId, setEditingTeamId] = useState('');
+  const [editTeamName, setEditTeamName] = useState('');
+  const [editTeamDesc, setEditTeamDesc] = useState('');
+  const [updating, setUpdating] = useState(false);
+
+  const handleOpenEdit = (t: Team) => {
+    setEditingTeamId(t.id);
+    setEditTeamName(t.name);
+    setEditTeamDesc(t.description || '');
+    setEditModalVisible(true);
+  };
+
+  const handleUpdateTeam = async () => {
+    if (!editTeamName.trim()) {
+      Alert.alert('Validation', 'Please enter a team name.');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      await updateTeam(editingTeamId, {
+        name: editTeamName.trim(),
+        description: editTeamDesc.trim(),
+      });
+      setEditModalVisible(false);
+      Alert.alert('Success', 'Team information updated successfully!');
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'Failed to update team.');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -175,9 +211,24 @@ export const TeamsScreen: React.FC<TeamsScreenProps> = ({ navigation }) => {
                         </Text>
                       </View>
                     </View>
-                    <View style={styles.codeBadge}>
-                      <Ionicons name="key" size={11} color="#059669" />
-                      <Text style={styles.codeText}>{item.code}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      {isOwner && (
+                        <TouchableOpacity
+                          style={styles.cardEditBtn}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleOpenEdit(item);
+                          }}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          accessibilityLabel="Edit Team"
+                        >
+                          <Ionicons name="pencil" size={13} color="#4f46e5" />
+                        </TouchableOpacity>
+                      )}
+                      <View style={styles.codeBadge}>
+                        <Ionicons name="key" size={11} color="#059669" />
+                        <Text style={styles.codeText}>{item.code}</Text>
+                      </View>
                     </View>
                   </View>
 
@@ -308,6 +359,64 @@ export const TeamsScreen: React.FC<TeamsScreenProps> = ({ navigation }) => {
                     <ActivityIndicator color="#ffffff" size="small" />
                   ) : (
                     <Text style={styles.modalConfirmText}>Join Team</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Edit Team Modal */}
+        <Modal
+          visible={editModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setEditModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>✏️ Edit Team</Text>
+              <Text style={styles.modalSubtitle}>
+                Update the team name and description
+              </Text>
+
+              <Text style={styles.inputLabel}>Team Name *</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Enter team name"
+                placeholderTextColor="#94a3b8"
+                value={editTeamName}
+                onChangeText={setEditTeamName}
+              />
+
+              <Text style={styles.inputLabel}>Description</Text>
+              <TextInput
+                style={[styles.modalInput, styles.modalTextArea]}
+                placeholder="Team mission or description..."
+                placeholderTextColor="#94a3b8"
+                multiline
+                numberOfLines={3}
+                value={editTeamDesc}
+                onChangeText={setEditTeamDesc}
+              />
+
+              <View style={styles.modalActionRow}>
+                <TouchableOpacity
+                  style={styles.modalCancelBtn}
+                  onPress={() => setEditModalVisible(false)}
+                  disabled={updating}
+                >
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalConfirmBtn}
+                  onPress={handleUpdateTeam}
+                  disabled={updating}
+                >
+                  {updating ? (
+                    <ActivityIndicator color="#ffffff" size="small" />
+                  ) : (
+                    <Text style={styles.modalConfirmText}>Save Changes</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -485,6 +594,15 @@ const styles = StyleSheet.create({
   ownerText: {
     fontSize: 12,
     color: '#64748b',
+  },
+  cardEditBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#eef2ff',
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   codeBadge: {
     flexDirection: 'row',

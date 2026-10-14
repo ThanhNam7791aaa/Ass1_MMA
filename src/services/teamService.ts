@@ -10,6 +10,7 @@ import {
   onSnapshot,
   orderBy,
   Unsubscribe,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { Team, TeamMember } from '../types/team';
@@ -255,3 +256,25 @@ export const getTeamById = async (teamId: string): Promise<Team | null> => {
   }
   return null;
 };
+
+/**
+ * Update an existing team's name and description
+ */
+export const updateTeam = async (
+  teamId: string,
+  data: { name: string; description: string }
+): Promise<void> => {
+  const cleanName = data.name.trim();
+  const cleanDesc = data.description.trim();
+
+  if (!cleanName) {
+    throw new Error('Team name cannot be empty.');
+  }
+
+  await updateDoc(doc(db, TEAMS_COLLECTION, teamId), {
+    name: cleanName,
+    description: cleanDesc,
+    updatedAt: serverTimestamp(),
+  });
+};
+

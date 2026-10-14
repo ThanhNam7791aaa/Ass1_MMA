@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Share,
   Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +19,7 @@ import {
   getTeamById,
   subscribeTeamMembers,
   subscribeTeamTasks,
+  updateTeam,
 } from '../services/teamService';
 import { createTask, updateTask, deleteTask } from '../services/taskService';
 import { TaskCard } from '../components/TaskCard';
@@ -42,6 +45,44 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
   // Task Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  // Edit Team Modal state
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [savingTeam, setSavingTeam] = useState(false);
+
+  const handleOpenEditTeam = () => {
+    setEditName(team?.name || teamName);
+    setEditDesc(team?.description || '');
+    setEditModalVisible(true);
+  };
+
+  const handleSaveTeam = async () => {
+    if (!editName.trim()) {
+      Alert.alert('Required', 'Please enter a team name.');
+      return;
+    }
+
+    try {
+      setSavingTeam(true);
+      await updateTeam(teamId, {
+        name: editName.trim(),
+        description: editDesc.trim(),
+      });
+      setTeam((prev) =>
+        prev
+          ? { ...prev, name: editName.trim(), description: editDesc.trim() }
+          : null
+      );
+      setEditModalVisible(false);
+      Alert.alert('Success', 'Team information updated successfully!');
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'Failed to update team.');
+    } finally {
+      setSavingTeam(false);
+    }
+  };
 
   useEffect(() => {
     // 1. Fetch Team Details
@@ -117,9 +158,22 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
           <Text style={styles.navTitle} numberOfLines={1}>
             {team?.name || teamName}
           </Text>
-          <TouchableOpacity onPress={handleShareCode} style={styles.shareCodeButton}>
-            <Ionicons name="share-outline" size={20} color="#4f46e5" />
-          </TouchableOpacity>
+          <View style={styles.navRightActions}>
+            <TouchableOpacity
+              onPress={handleOpenEditTeam}
+              style={styles.iconActionButton}
+              accessibilityLabel="Edit Team"
+            >
+              <Ionicons name="pencil" size={18} color="#4f46e5" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleShareCode}
+              style={styles.iconActionButton}
+              accessibilityLabel="Share Team Code"
+            >
+              <Ionicons name="share-outline" size={18} color="#4f46e5" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Team Banner Card */}
@@ -129,7 +183,16 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
               <Ionicons name="people" size={24} color="#4f46e5" />
             </View>
             <View style={styles.bannerInfo}>
-              <Text style={styles.bannerName}>{team?.name || teamName}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={styles.bannerName}>{team?.name || teamName}</Text>
+                <TouchableOpacity
+                  onPress={handleOpenEditTeam}
+                  style={styles.inlineEditBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="pencil-outline" size={16} color="#4f46e5" />
+                </TouchableOpacity>
+              </View>
               <Text style={styles.bannerDesc} numberOfLines={2}>
                 {team?.description || 'No description provided'}
               </Text>
@@ -286,6 +349,73 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
           onClose={() => setModalVisible(false)}
           onSave={handleSaveTask}
         />
+
+        {/* Edit Team Modal */}
+        <Modal
+          visible={editModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setEditModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalIconBox}>
+                  <Ionicons name="create-outline" size={20} color="#4f46e5" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.modalTitle}>Edit Team</Text>
+                  <Text style={styles.modalSubtitle}>Update team name and description</Text>
+                </View>
+                <TouchableOpacity onPress={() => setEditModalVisible(false)} style={styles.modalCloseBtn}>
+                  <Ionicons name="close" size={20} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.inputLabel}>Team Name *</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Enter team name"
+                placeholderTextColor="#94a3b8"
+              />
+
+              <Text style={styles.inputLabel}>Description</Text>
+              <TextInput
+                style={[styles.modalInput, styles.modalTextArea]}
+                value={editDesc}
+                onChangeText={setEditDesc}
+                placeholder="Team mission or description"
+                placeholderTextColor="#94a3b8"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+
+              <View style={styles.modalActionRow}>
+                <TouchableOpacity
+                  style={styles.modalCancelBtn}
+                  onPress={() => setEditModalVisible(false)}
+                  disabled={savingTeam}
+                >
+                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalSaveBtn, savingTeam && { opacity: 0.6 }]}
+                  onPress={handleSaveTeam}
+                  disabled={savingTeam}
+                >
+                  {savingTeam ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.modalSaveBtnText}>Save Changes</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -320,10 +450,22 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
   },
-  shareCodeButton: {
-    padding: 6,
+  navRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconActionButton: {
+    padding: 7,
     borderRadius: 8,
     backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inlineEditBtn: {
+    padding: 3,
+    borderRadius: 6,
+    backgroundColor: '#eef2ff',
   },
   teamBanner: {
     backgroundColor: '#ffffff',
@@ -557,5 +699,108 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#94a3b8',
     marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 22,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 18,
+  },
+  modalIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#eef2ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 6,
+    marginTop: 10,
+  },
+  modalInput: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#0f172a',
+  },
+  modalTextArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  modalActionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  modalSaveBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#4f46e5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  modalSaveBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ffffff',
   },
 });

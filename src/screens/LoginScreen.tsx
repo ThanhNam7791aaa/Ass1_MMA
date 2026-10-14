@@ -9,8 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 
@@ -37,13 +37,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       setError(null);
       await login(email.trim(), password);
     } catch (err: any) {
-      let message = 'Failed to sign in. Please verify your credentials.';
+      console.error('[Login Error]:', err?.code, err?.message, err);
+      let message = err?.message || 'Failed to sign in. Please verify your credentials.';
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
         message = 'Invalid email or password.';
       } else if (err.code === 'auth/user-not-found') {
         message = 'No account found with this email.';
       } else if (err.code === 'auth/invalid-email') {
         message = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        message = 'Email/Password sign-in is not enabled in Firebase Console.';
       }
       setError(message);
     } finally {

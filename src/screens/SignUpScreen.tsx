@@ -9,8 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 
@@ -52,13 +52,18 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
       setError(null);
       await signUp(name.trim(), email.trim(), password);
     } catch (err: any) {
-      let message = 'Failed to create account. Please try again.';
-      if (err.code === 'auth/email-already-in-use') {
+      console.error('[SignUp Error]:', err?.code, err?.message, err);
+      let message = err?.message || 'Failed to create account. Please try again.';
+      if (err.code === 'auth/operation-not-allowed') {
+        message = 'Email/Password sign-in is not enabled in Firebase Console.';
+      } else if (err.code === 'auth/email-already-in-use') {
         message = 'This email is already registered. Please sign in instead.';
       } else if (err.code === 'auth/invalid-email') {
         message = 'Please enter a valid email address.';
       } else if (err.code === 'auth/weak-password') {
         message = 'Password is too weak. Please use a stronger password.';
+      } else if (err.code === 'auth/network-request-failed') {
+        message = 'Network request failed. Please check internet connection.';
       }
       setError(message);
     } finally {

@@ -31,7 +31,11 @@ export const signUpUser = async (
   const user = userCredential.user;
 
   // Set displayName in Firebase Auth
-  await updateProfile(user, { displayName: cleanName });
+  try {
+    await updateProfile(user, { displayName: cleanName });
+  } catch (err) {
+    console.warn('Could not update profile displayName:', err);
+  }
 
   // Provision Firestore user document
   const userProfile: UserProfile = {
@@ -42,10 +46,15 @@ export const signUpUser = async (
     createdAt: serverTimestamp(),
   };
 
-  await setDoc(doc(db, USERS_COLLECTION, user.uid), userProfile);
+  try {
+    await setDoc(doc(db, USERS_COLLECTION, user.uid), userProfile);
+  } catch (firestoreErr) {
+    console.warn('Could not write user profile to Firestore (check Firestore Rules):', firestoreErr);
+  }
 
   return userProfile;
 };
+
 
 /**
  * Sign in an existing user with Email and Password

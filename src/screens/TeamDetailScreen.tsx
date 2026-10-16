@@ -24,6 +24,7 @@ import {
 import { createTask, updateTask, deleteTask } from '../services/taskService';
 import { TaskCard } from '../components/TaskCard';
 import { TaskModal } from '../components/TaskModal';
+import { useAuth } from '../context/AuthContext';
 
 interface TeamDetailScreenProps {
   route: any;
@@ -35,6 +36,7 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
   navigation,
 }) => {
   const { teamId, teamName } = route.params;
+  const { user } = useAuth();
 
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -125,12 +127,14 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
         ...taskData,
         teamId,
         teamName: team?.name || teamName,
+        userId: editingTask.userId || user?.uid,
       });
     } else {
       await createTask({
         ...taskData,
         teamId,
         teamName: team?.name || teamName,
+        userId: user?.uid,
       });
     }
   };

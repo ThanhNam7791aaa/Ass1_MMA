@@ -26,7 +26,7 @@ import { TaskModal } from '../components/TaskModal';
 type FilterType = 'All' | TaskStatus;
 
 export const HomeScreen: React.FC = () => {
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,10 +36,17 @@ export const HomeScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Subscribe to real-time updates from Firestore
+  // Subscribe to real-time updates from Firestore for the current user
   useEffect(() => {
+    if (!user) {
+      setTasks([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     const unsubscribe = subscribeToTasks(
+      user.uid,
       (newTasks) => {
         setTasks(newTasks);
         setLoading(false);
@@ -56,7 +63,7 @@ export const HomeScreen: React.FC = () => {
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [user]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -82,9 +89,15 @@ export const HomeScreen: React.FC = () => {
   const handleSaveTask = async (taskData: any) => {
     try {
       if (editingTask && editingTask.id) {
-        await updateTask(editingTask.id, taskData);
+        await updateTask(editingTask.id, {
+          ...taskData,
+          userId: editingTask.userId || user?.uid,
+        });
       } else {
-        await createTask(taskData);
+        await createTask({
+          ...taskData,
+          userId: user?.uid,
+        });
       }
     } catch (error: any) {
       console.error('Failed to save task:', error);

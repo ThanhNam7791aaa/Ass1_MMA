@@ -13,4 +13,5 @@ export interface Task {
   teamName?: string;
   assigneeId?: string | null;
   assigneeName?: string;
+  userId?: string | null;
 }

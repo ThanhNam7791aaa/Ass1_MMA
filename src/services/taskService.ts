@@ -6,7 +6,8 @@ import {
   doc,
   onSnapshot,
   query,
-  orderBy,
+  where,
+  or,
   serverTimestamp,
   type Unsubscribe,
 } from 'firebase/firestore';
@@ -16,14 +17,27 @@ import { Task } from '../types/task';
 const TASKS_COLLECTION = 'tasks';
 
 /**
- * Real-time listener for all tasks or filtered tasks, ordered by createdAt descending.
+ * Real-time listener for tasks belonging to a specific user (created by or assigned to),
+ * ordered by createdAt descending.
  */
 export const subscribeToTasks = (
+  userId: string,
   onUpdate: (tasks: Task[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe => {
+  if (!userId) {
+    onUpdate([]);
+    return () => {};
+  }
+
   const collectionRef = collection(db, TASKS_COLLECTION);
-  const q = query(collectionRef, orderBy('createdAt', 'desc'));
+  const q = query(
+    collectionRef,
+    or(
+      where('userId', '==', userId),
+      where('assigneeId', '==', userId)
+    )
+  );
 
   return onSnapshot(
     q,
@@ -42,31 +56,50 @@ export const subscribeToTasks = (
           teamName: data.teamName || '',
           assigneeId: data.assigneeId ?? null,
           assigneeName: data.assigneeName || '',
+          userId: data.userId || null,
         } as Task;
       });
+
+      // Sort client-side by createdAt descending for reliable ordering without composite index requirement
+      tasks.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+        const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+        return timeB - timeA;
+      });
+
       onUpdate(tasks);
     },
     (error) => {
-      console.warn('Realtime listener fallback without order:', error.message);
+      console.warn('Realtime listener fallback with client-side filter:', error.message);
       return onSnapshot(
         collectionRef,
         (snapshot) => {
-          const tasks: Task[] = snapshot.docs.map((docSnap) => {
-            const data = docSnap.data();
-            return {
-              id: docSnap.id,
-              title: data.title || '',
-              description: data.description || '',
-              status: data.status || 'To Do',
-              priority: data.priority || 'Medium',
-              dueDate: data.dueDate || '',
-              createdAt: data.createdAt,
-              teamId: data.teamId ?? null,
-              teamName: data.teamName || '',
-              assigneeId: data.assigneeId ?? null,
-              assigneeName: data.assigneeName || '',
-            } as Task;
+          const tasks: Task[] = snapshot.docs
+            .map((docSnap) => {
+              const data = docSnap.data();
+              return {
+                id: docSnap.id,
+                title: data.title || '',
+                description: data.description || '',
+                status: data.status || 'To Do',
+                priority: data.priority || 'Medium',
+                dueDate: data.dueDate || '',
+                createdAt: data.createdAt,
+                teamId: data.teamId ?? null,
+                teamName: data.teamName || '',
+                assigneeId: data.assigneeId ?? null,
+                assigneeName: data.assigneeName || '',
+                userId: data.userId || null,
+              } as Task;
+            })
+            .filter((t) => t.userId === userId || t.assigneeId === userId);
+
+          tasks.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+            return timeB - timeA;
           });
+
           onUpdate(tasks);
         },
         onError
@@ -89,6 +122,7 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
     teamName: task.teamName || null,
     assigneeId: task.assigneeId ?? null,
     assigneeName: task.assigneeName || null,
+    userId: task.userId ?? null,
     createdAt: serverTimestamp(),
   });
   return docRef.id;
@@ -110,6 +144,7 @@ export const updateTask = async (id: string, updates: Partial<Task>): Promise<vo
   if (updates.teamName !== undefined) dataToUpdate.teamName = updates.teamName;
   if (updates.assigneeId !== undefined) dataToUpdate.assigneeId = updates.assigneeId;
   if (updates.assigneeName !== undefined) dataToUpdate.assigneeName = updates.assigneeName;
+  if (updates.userId !== undefined) dataToUpdate.userId = updates.userId;
 
   await updateDoc(taskRef, dataToUpdate);
 };

@@ -11,12 +11,28 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyC7uYzZ3C1i6ND9Wly5xlwFN8RDcpvQ8wU",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "ass1-mma.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "ass1-mma",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "ass1-mma.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "976848690701",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:976848690701:web:8d6a2e3ea8321668d4ff44"
       }
     },
     "production": {
       "autoIncrement": true,
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyC7uYzZ3C1i6ND9Wly5xlwFN8RDcpvQ8wU",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "ass1-mma.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "ass1-mma",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "ass1-mma.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "976848690701",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:976848690701:web:8d6a2e3ea8321668d4ff44"
       }
     }
   },

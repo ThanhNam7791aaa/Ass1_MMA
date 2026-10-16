@@ -5,7 +5,7 @@
 **Student ID:** [Điền Mã Số Sinh Viên: ví dụ QE160123 / SE160123]  
 **Class:** [Điền Mã Lớp: ví dụ SE1801]  
 **GitHub Repository:** https://github.com/ThanhNam7791aaa/Ass2_MMA  
-**Direct APK Download Link:** https://expo.dev/artifacts/eas/MjH_M-LelaJ4luGT0vghggyg9YEcnpyxYTasHkV7tzw.apk  
+**Direct APK Download Link:** https://expo.dev/artifacts/eas/OrwjTdcsZjdKvSY1o9eAkdWsHG41Pa7R1gyBdTjvkhM.apk  
 **Expo Build Details:** https://expo.dev/accounts/thanhnam7791as-team/projects/ass1-mma/builds/ce03aa2e-68b6-4eac-810b-1cd3ef2214cc  
 **Download QR Code:** [app_download_qr.png](app_download_qr.png)  
 

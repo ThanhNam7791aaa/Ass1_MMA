@@ -16,19 +16,20 @@ import { Task } from '../types/task';
 const TASKS_COLLECTION = 'tasks';
 
 /**
- * Real-time listener for all tasks or filtered tasks, ordered by createdAt descending.
+ * Real-time listener for tasks associated with the current user
+ * (created by user OR assigned to user), ordered by createdAt descending.
  */
 export const subscribeToTasks = (
+  userId: string,
   onUpdate: (tasks: Task[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe => {
   const collectionRef = collection(db, TASKS_COLLECTION);
   const q = query(collectionRef, orderBy('createdAt', 'desc'));
 
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      const tasks: Task[] = snapshot.docs.map((docSnap) => {
+  const mapAndFilterTasks = (docs: any[]): Task[] => {
+    return docs
+      .map((docSnap) => {
         const data = docSnap.data();
         return {
           id: docSnap.id,
@@ -38,36 +39,35 @@ export const subscribeToTasks = (
           priority: data.priority || 'Medium',
           dueDate: data.dueDate || '',
           createdAt: data.createdAt,
+          userId: data.userId || null,
           teamId: data.teamId ?? null,
           teamName: data.teamName || '',
           assigneeId: data.assigneeId ?? null,
           assigneeName: data.assigneeName || '',
         } as Task;
+      })
+      .filter((t) => {
+        if (!userId) return false;
+        // Show task if current user created it OR is assigned to it
+        if (t.userId === userId) return true;
+        if (t.assigneeId === userId) return true;
+        return false;
       });
-      onUpdate(tasks);
+  };
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const userTasks = mapAndFilterTasks(snapshot.docs);
+      onUpdate(userTasks);
     },
     (error) => {
       console.warn('Realtime listener fallback without order:', error.message);
       return onSnapshot(
         collectionRef,
         (snapshot) => {
-          const tasks: Task[] = snapshot.docs.map((docSnap) => {
-            const data = docSnap.data();
-            return {
-              id: docSnap.id,
-              title: data.title || '',
-              description: data.description || '',
-              status: data.status || 'To Do',
-              priority: data.priority || 'Medium',
-              dueDate: data.dueDate || '',
-              createdAt: data.createdAt,
-              teamId: data.teamId ?? null,
-              teamName: data.teamName || '',
-              assigneeId: data.assigneeId ?? null,
-              assigneeName: data.assigneeName || '',
-            } as Task;
-          });
-          onUpdate(tasks);
+          const userTasks = mapAndFilterTasks(snapshot.docs);
+          onUpdate(userTasks);
         },
         onError
       );
@@ -85,6 +85,7 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
     status: task.status || 'To Do',
     priority: task.priority || 'Medium',
     dueDate: task.dueDate || '',
+    userId: task.userId || null,
     teamId: task.teamId ?? null,
     teamName: task.teamName || null,
     assigneeId: task.assigneeId ?? null,

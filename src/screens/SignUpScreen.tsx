@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,24 +9,62 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import { useAuth } from '../context/AuthContext';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_CLIENT_ID =
+  process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+  '976848690701-j8upaj7jhuc1iukidqgrc5gad5356c5t.apps.googleusercontent.com';
 
 interface SignUpScreenProps {
   navigation: any;
 }
 
 export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
-  const { signUp } = useAuth();
+  const { signUp, loginWithGoogle } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: GOOGLE_CLIENT_ID,
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      if (id_token) {
+        handleGoogleSignUp(id_token);
+      }
+    } else if (response?.type === 'error') {
+      setError(response.error?.message || 'Google Sign-Up failed.');
+    }
+  }, [response]);
+
+  const handleGoogleSignUp = async (idToken: string) => {
+    try {
+      setGoogleLoading(true);
+      setError(null);
+      await loginWithGoogle(idToken);
+    } catch (err: any) {
+      console.error('[Google Sign-Up Error]:', err);
+      setError(err?.message || 'Failed to sign up with Google.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSignUp = async () => {
     // Client-side validation
@@ -211,12 +249,40 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({ navigation }) => {
             <TouchableOpacity
               style={styles.signUpButton}
               onPress={handleSignUp}
-              disabled={loading}
+              disabled={loading || googleLoading}
             >
               {loading ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
                 <Text style={styles.signUpText}>Sign Up</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or continue with</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Google Sign Up Button */}
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={() => promptAsync()}
+              disabled={!request || googleLoading || loading}
+              activeOpacity={0.8}
+            >
+              {googleLoading ? (
+                <ActivityIndicator color="#0f172a" size="small" />
+              ) : (
+                <>
+                  <Image
+                    source={require('../../assets/google-icon.png')}
+                    style={styles.googleIconImage}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.googleButtonText}>Sign Up with Google</Text>
+                </>
               )}
             </TouchableOpacity>
 
@@ -353,6 +419,48 @@ const styles = StyleSheet.create({
   signUpText: {
     color: '#ffffff',
     fontSize: 15,
+    fontWeight: '700',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e2e8f0',
+  },
+  dividerText: {
+    paddingHorizontal: 12,
+    fontSize: 12,
+    color: '#94a3b8',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    paddingVertical: 13,
+    borderRadius: 12,
+    gap: 10,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  googleIconImage: {
+    width: 20,
+    height: 20,
+  },
+  googleButtonText: {
+    color: '#0f172a',
+    fontSize: 14,
     fontWeight: '700',
   },
   footerRow: {

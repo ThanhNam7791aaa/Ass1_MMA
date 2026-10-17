@@ -11,6 +11,7 @@ import {
   orderBy,
   Unsubscribe,
   updateDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { Team, TeamMember } from '../types/team';
@@ -341,5 +342,148 @@ export const updateTeam = async (
     description: cleanDesc,
     updatedAt: serverTimestamp(),
   });
+};
+
+/**
+ * Leave a team (for regular members)
+ */
+export const leaveTeam = async (teamId: string, userId: string): Promise<void> => {
+  // 1. Verify team and check if user is owner
+  const teamDoc = await getDoc(doc(db, TEAMS_COLLECTION, teamId));
+  if (teamDoc.exists()) {
+    const teamData = teamDoc.data();
+    if (teamData.ownerId === userId) {
+      throw new Error('Team owners cannot leave the team. You can disband the team instead.');
+    }
+  }
+
+  // 2. Find membership doc in teamMembers
+  const qMembers = query(
+    collection(db, TEAM_MEMBERS_COLLECTION),
+    where('teamId', '==', teamId),
+    where('userId', '==', userId)
+  );
+  const snapMembers = await getDocs(qMembers);
+
+  if (snapMembers.empty) {
+    throw new Error('You are not a member of this team.');
+  }
+
+  // 3. Delete the member document
+  const deletePromises = snapMembers.docs.map((d) =>
+    deleteDoc(doc(db, TEAM_MEMBERS_COLLECTION, d.id))
+  );
+  await Promise.all(deletePromises);
+
+  // 4. Unassign tasks assigned to this user in this team
+  try {
+    const qTasks = query(
+      collection(db, TASKS_COLLECTION),
+      where('teamId', '==', teamId),
+      where('assigneeId', '==', userId)
+    );
+    const snapTasks = await getDocs(qTasks);
+    const unassignPromises = snapTasks.docs.map((d) =>
+      updateDoc(doc(db, TASKS_COLLECTION, d.id), {
+        assigneeId: null,
+        assigneeName: '',
+      })
+    );
+    await Promise.all(unassignPromises);
+  } catch (err) {
+    console.warn('Could not unassign tasks upon leaving team:', err);
+  }
+};
+
+/**
+ * Remove a member from the team (for team owner)
+ */
+export const removeTeamMember = async (
+  teamId: string,
+  targetUserId: string,
+  currentUserId: string
+): Promise<void> => {
+  // 1. Check if current user is owner
+  const teamDoc = await getDoc(doc(db, TEAMS_COLLECTION, teamId));
+  if (!teamDoc.exists()) {
+    throw new Error('Team does not exist.');
+  }
+
+  const teamData = teamDoc.data();
+  if (teamData.ownerId !== currentUserId) {
+    throw new Error('Only the team owner can remove members.');
+  }
+
+  if (targetUserId === teamData.ownerId) {
+    throw new Error('You cannot remove the team owner.');
+  }
+
+  // 2. Find target member in teamMembers
+  const qMembers = query(
+    collection(db, TEAM_MEMBERS_COLLECTION),
+    where('teamId', '==', teamId),
+    where('userId', '==', targetUserId)
+  );
+  const snapMembers = await getDocs(qMembers);
+
+  if (snapMembers.empty) {
+    throw new Error('This user is not a member of the team.');
+  }
+
+  // 3. Delete member doc
+  const deletePromises = snapMembers.docs.map((d) =>
+    deleteDoc(doc(db, TEAM_MEMBERS_COLLECTION, d.id))
+  );
+  await Promise.all(deletePromises);
+
+  // 4. Unassign tasks assigned to this member in this team
+  try {
+    const qTasks = query(
+      collection(db, TASKS_COLLECTION),
+      where('teamId', '==', teamId),
+      where('assigneeId', '==', targetUserId)
+    );
+    const snapTasks = await getDocs(qTasks);
+    const unassignPromises = snapTasks.docs.map((d) =>
+      updateDoc(doc(db, TASKS_COLLECTION, d.id), {
+        assigneeId: null,
+        assigneeName: '',
+      })
+    );
+    await Promise.all(unassignPromises);
+  } catch (err) {
+    console.warn('Could not unassign tasks upon member removal:', err);
+  }
+};
+
+/**
+ * Delete a team (for team owner)
+ */
+export const deleteTeam = async (teamId: string, userId: string): Promise<void> => {
+  const teamRef = doc(db, TEAMS_COLLECTION, teamId);
+  const teamSnap = await getDoc(teamRef);
+
+  if (!teamSnap.exists()) {
+    throw new Error('Team does not exist.');
+  }
+
+  const teamData = teamSnap.data();
+  if (teamData.ownerId !== userId) {
+    throw new Error('Only the team owner can delete the team.');
+  }
+
+  // 1. Delete all teamMembers records
+  const qMembers = query(
+    collection(db, TEAM_MEMBERS_COLLECTION),
+    where('teamId', '==', teamId)
+  );
+  const snapMembers = await getDocs(qMembers);
+  const deleteMembers = snapMembers.docs.map((d) =>
+    deleteDoc(doc(db, TEAM_MEMBERS_COLLECTION, d.id))
+  );
+  await Promise.all(deleteMembers);
+
+  // 2. Delete team doc
+  await deleteDoc(teamRef);
 };
 

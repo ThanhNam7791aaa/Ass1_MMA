@@ -2,6 +2,7 @@
   "expo": {
     "name": "Ass1_MMA_",
     "slug": "ass1-mma",
+    "scheme": "taskpulse",
     "owner": "thanhnam7791as-team",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -27,6 +28,9 @@
       "eas": {
         "projectId": "96849773-df93-4387-afa4-8b7f7040371b"
       }
-    }
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }

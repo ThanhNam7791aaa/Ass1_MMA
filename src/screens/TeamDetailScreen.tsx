@@ -20,6 +20,9 @@ import {
   subscribeTeamMembers,
   subscribeTeamTasks,
   updateTeam,
+  leaveTeam,
+  deleteTeam,
+  removeTeamMember,
 } from '../services/teamService';
 import { createTask, updateTask, deleteTask } from '../services/taskService';
 import { TaskCard } from '../components/TaskCard';
@@ -138,6 +141,83 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
     }
   };
 
+  const isOwner = team ? team.ownerId === user?.uid : false;
+
+  const handleLeaveTeam = () => {
+    if (!user) return;
+    Alert.alert(
+      'Leave Team',
+      `Are you sure you want to leave "${team?.name || teamName}"? You will need an invite code to rejoin.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await leaveTeam(teamId, user.uid);
+              Alert.alert('Success', `You have left "${team?.name || teamName}".`);
+              navigation.goBack();
+            } catch (err: any) {
+              setLoading(false);
+              Alert.alert('Error', err?.message || 'Failed to leave team.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteTeam = () => {
+    if (!user) return;
+    Alert.alert(
+      'Delete Team',
+      `Are you sure you want to delete and disband "${team?.name || teamName}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await deleteTeam(teamId, user.uid);
+              Alert.alert('Deleted', `Team "${team?.name || teamName}" has been deleted.`);
+              navigation.goBack();
+            } catch (err: any) {
+              setLoading(false);
+              Alert.alert('Error', err?.message || 'Failed to delete team.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRemoveMember = (targetMember: TeamMember) => {
+    if (!user) return;
+    Alert.alert(
+      'Remove Member',
+      `Are you sure you want to remove "${targetMember.userName}" from this team?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeTeamMember(teamId, targetMember.userId, user.uid);
+              Alert.alert('Success', `"${targetMember.userName}" has been removed from the team.`);
+            } catch (err: any) {
+              Alert.alert('Error', err?.message || 'Failed to remove member.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleDeleteTask = (id: string, title: string) => {
     Alert.alert('Delete Task', `Delete "${title}"?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -163,13 +243,15 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
             {team?.name || teamName}
           </Text>
           <View style={styles.navRightActions}>
-            <TouchableOpacity
-              onPress={handleOpenEditTeam}
-              style={styles.iconActionButton}
-              accessibilityLabel="Edit Team"
-            >
-              <Ionicons name="pencil" size={18} color="#4f46e5" />
-            </TouchableOpacity>
+            {isOwner && (
+              <TouchableOpacity
+                onPress={handleOpenEditTeam}
+                style={styles.iconActionButton}
+                accessibilityLabel="Edit Team"
+              >
+                <Ionicons name="pencil" size={18} color="#4f46e5" />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               onPress={handleShareCode}
               style={styles.iconActionButton}
@@ -177,6 +259,23 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
             >
               <Ionicons name="share-outline" size={18} color="#4f46e5" />
             </TouchableOpacity>
+            {isOwner ? (
+              <TouchableOpacity
+                onPress={handleDeleteTeam}
+                style={[styles.iconActionButton, { backgroundColor: '#fee2e2' }]}
+                accessibilityLabel="Delete Team"
+              >
+                <Ionicons name="trash-outline" size={18} color="#ef4444" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={handleLeaveTeam}
+                style={[styles.iconActionButton, { backgroundColor: '#fee2e2' }]}
+                accessibilityLabel="Leave Team"
+              >
+                <Ionicons name="log-out-outline" size={18} color="#ef4444" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -304,34 +403,73 @@ export const TeamDetailScreen: React.FC<TeamDetailScreenProps> = ({
             data={members}
             keyExtractor={(item) => item.id || item.userId}
             contentContainerStyle={styles.listPad}
-            renderItem={({ item }) => (
-              <View style={styles.memberCard}>
-                <View style={styles.memberAvatar}>
-                  <Text style={styles.memberInitial}>
-                    {item.userName.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-                <View style={styles.memberInfo}>
-                  <Text style={styles.memberName}>{item.userName}</Text>
-                  <Text style={styles.memberEmail}>{item.userEmail}</Text>
-                </View>
-                <View
-                  style={[
-                    styles.roleBadge,
-                    item.role === 'owner' ? styles.roleBadgeOwner : styles.roleBadgeMember,
-                  ]}
-                >
-                  <Text
+            renderItem={({ item }) => {
+              const isCurrentUser = item.userId === user?.uid;
+              return (
+                <View style={styles.memberCard}>
+                  <View style={styles.memberAvatar}>
+                    <Text style={styles.memberInitial}>
+                      {item.userName.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.memberInfo}>
+                    <Text style={styles.memberName}>
+                      {item.userName}
+                      {isCurrentUser ? ' (You)' : ''}
+                    </Text>
+                    <Text style={styles.memberEmail}>{item.userEmail}</Text>
+                  </View>
+                  <View
                     style={[
-                      styles.roleText,
-                      item.role === 'owner' ? styles.roleTextOwner : styles.roleTextMember,
+                      styles.roleBadge,
+                      item.role === 'owner' ? styles.roleBadgeOwner : styles.roleBadgeMember,
                     ]}
                   >
-                    {item.role.toUpperCase()}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.roleText,
+                        item.role === 'owner' ? styles.roleTextOwner : styles.roleTextMember,
+                      ]}
+                    >
+                      {item.role.toUpperCase()}
+                    </Text>
+                  </View>
+                  {isOwner && !isCurrentUser && (
+                    <TouchableOpacity
+                      style={styles.removeMemberBtn}
+                      activeOpacity={0.7}
+                      onPress={() => handleRemoveMember(item)}
+                      accessibilityLabel={`Remove ${item.userName} from team`}
+                    >
+                      <Ionicons name="person-remove-outline" size={16} color="#ef4444" />
+                    </TouchableOpacity>
+                  )}
                 </View>
+              );
+            }}
+            ListFooterComponent={
+              <View style={styles.membersFooterContainer}>
+                {isOwner ? (
+                  <TouchableOpacity
+                    style={styles.deleteTeamFooterBtn}
+                    onPress={handleDeleteTeam}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                    <Text style={styles.deleteTeamFooterText}>Disband & Delete Team</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.leaveTeamFooterBtn}
+                    onPress={handleLeaveTeam}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="log-out-outline" size={18} color="#ef4444" />
+                    <Text style={styles.leaveTeamFooterText}>Leave This Team</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-            )}
+            }
           />
         )}
 
@@ -673,6 +811,57 @@ const styles = StyleSheet.create({
   },
   roleTextMember: {
     color: '#64748b',
+  },
+  membersFooterContainer: {
+    marginTop: 24,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  leaveTeamFooterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff1f2',
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    width: '100%',
+    gap: 8,
+  },
+  leaveTeamFooterText: {
+    color: '#e11d48',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  deleteTeamFooterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff1f2',
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    width: '100%',
+    gap: 8,
+  },
+  deleteTeamFooterText: {
+    color: '#e11d48',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  removeMemberBtn: {
+    marginLeft: 8,
+    padding: 7,
+    borderRadius: 8,
+    backgroundColor: '#fff1f2',
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   loadingBox: {
     flex: 1,

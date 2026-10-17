@@ -19,6 +19,7 @@ import {
   subscribeUserTeams,
   createTeam,
   joinTeamByCode,
+  leaveTeam,
 } from '../services/teamService';
 
 interface TeamsScreenProps {
@@ -92,6 +93,29 @@ export const TeamsScreen: React.FC<TeamsScreenProps> = ({ navigation }) => {
     } finally {
       setJoining(false);
     }
+  };
+
+  const handleLeaveTeam = (teamItem: Team) => {
+    if (!user) return;
+    Alert.alert(
+      'Leave Team',
+      `Are you sure you want to leave "${teamItem.name}"? You will need an invite code to rejoin.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await leaveTeam(teamItem.id, user.uid);
+              Alert.alert('Success', `You have left "${teamItem.name}".`);
+            } catch (err: any) {
+              Alert.alert('Error', err?.message || 'Failed to leave team.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -188,6 +212,19 @@ export const TeamsScreen: React.FC<TeamsScreenProps> = ({ navigation }) => {
                   ) : null}
 
                   <View style={styles.cardFooter}>
+                    {!isOwner ? (
+                      <TouchableOpacity
+                        style={styles.cardLeaveBtn}
+                        activeOpacity={0.7}
+                        onPress={() => handleLeaveTeam(item)}
+                      >
+                        <Ionicons name="log-out-outline" size={13} color="#ef4444" />
+                        <Text style={styles.cardLeaveBtnText}>Leave</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View />
+                    )}
+
                     <View style={styles.footerLink}>
                       <Text style={styles.footerLinkText}>Open Team Workspace</Text>
                       <Ionicons name="arrow-forward" size={14} color="#4f46e5" />
@@ -520,11 +557,28 @@ const styles = StyleSheet.create({
   },
   cardFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#f8fafc',
+  },
+  cardLeaveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: '#fff1f2',
+    borderWidth: 1,
+    borderColor: '#ffe4e6',
+  },
+  cardLeaveBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#e11d48',
   },
   footerLink: {
     flexDirection: 'row',

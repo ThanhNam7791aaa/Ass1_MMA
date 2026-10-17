@@ -48,10 +48,10 @@ export const subscribeToTasks = (
       })
       .filter((t) => {
         if (!userId) return false;
-        // Show task if current user created it OR is assigned to it
-        if (t.userId === userId) return true;
-        if (t.assigneeId === userId) return true;
-        return false;
+        // Team tasks only appear inside their respective team workspace
+        if (t.teamId) return false;
+        // Personal tasks belong to the creator
+        return t.userId === userId;
       });
   };
 

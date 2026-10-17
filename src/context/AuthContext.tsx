@@ -6,6 +6,7 @@ import {
   signUpUser,
   logoutUser,
   getUserProfile,
+  loginWithGoogleIdToken,
 } from '../services/authService';
 import { UserProfile } from '../types/user';
 
@@ -15,6 +16,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   signUp: (name: string, email: string, pass: string) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -66,6 +68,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUserProfile(profile);
   };
 
+  const loginWithGoogle = async (idToken: string) => {
+    const firebaseUser = await loginWithGoogleIdToken(idToken);
+    await fetchProfile(firebaseUser);
+  };
+
   const logout = async () => {
     await logoutUser();
     setUser(null);
@@ -86,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         loading,
         login,
         signUp,
+        loginWithGoogle,
         logout,
         refreshProfile,
       }}

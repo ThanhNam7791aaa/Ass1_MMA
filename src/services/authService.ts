@@ -6,6 +6,8 @@ import {
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
+  GoogleAuthProvider,
+  signInWithCredential,
   User,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
@@ -66,6 +68,34 @@ export const loginUser = async (email: string, pass: string): Promise<User> => {
   const cleanEmail = email.trim().toLowerCase();
   const credential = await signInWithEmailAndPassword(auth, cleanEmail, pass);
   return credential.user;
+};
+
+/**
+ * Sign in or sign up using Google ID token
+ */
+export const loginWithGoogleIdToken = async (idToken: string): Promise<User> => {
+  const credential = GoogleAuthProvider.credential(idToken);
+  const userCredential = await signInWithCredential(auth, credential);
+  const user = userCredential.user;
+
+  // Check if profile exists, if not create one
+  const existingProfile = await getUserProfile(user.uid);
+  if (!existingProfile) {
+    const userProfile: UserProfile = {
+      id: user.uid,
+      name: user.displayName || user.email?.split('@')[0] || 'Google User',
+      email: user.email || '',
+      avatarUrl: user.photoURL || '',
+      createdAt: serverTimestamp(),
+    };
+    try {
+      await setDoc(doc(db, USERS_COLLECTION, user.uid), userProfile);
+    } catch (err) {
+      console.warn('Could not write Google user profile to Firestore:', err);
+    }
+  }
+
+  return user;
 };
 
 /**
